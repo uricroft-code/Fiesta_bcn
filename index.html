@@ -264,7 +264,8 @@
             const [showInfo, setShowInfo] = useState(false);
 
             const handleAutoSpin = useCallback(() => {
-                if (prizes.length === 0 || numbers.length === 0 || isSpinningPrize || isSpinningNumber || showWinner) return;
+                // Modified: We allow spinning even if showWinner is true (it will reset it)
+                if (prizes.length === 0 || numbers.length === 0 || isSpinningPrize || isSpinningNumber) return;
 
                 setShowWinner(false);
                 setCurrentPrize(null);
@@ -320,7 +321,7 @@
                         }, 500);
                     }
                 }, 80);
-            }, [prizes, numbers, isSpinningPrize, isSpinningNumber, showWinner]);
+            }, [prizes, numbers, isSpinningPrize, isSpinningNumber]);
 
             const handleReset = () => {
                 if (confirm('¿Estás seguro de reiniciar la tómbola? Se perderán todos los ganadores y el historial.')) {
@@ -361,11 +362,19 @@
                         </div>
 
                         <div className="flex flex-col items-center justify-center mb-12 gap-6">
-                            <button onClick={handleAutoSpin} disabled={isGameActive || isGameOver || showWinner} className={`group relative overflow-hidden rounded-full py-6 px-20 bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-black text-3xl md:text-5xl shadow-[0_0_40px_rgba(251,191,36,0.6)] transform transition-all duration-300 border-4 border-yellow-200 ${isGameActive || isGameOver || showWinner ? 'opacity-60 grayscale cursor-not-allowed scale-95' : 'hover:scale-105 hover:shadow-[0_0_60px_rgba(251,191,36,0.8)] hover:-translate-y-1 active:scale-95 active:translate-y-1'}`}>
+                            <button 
+                                onClick={handleAutoSpin} 
+                                disabled={isGameActive || isGameOver} 
+                                className={`group relative overflow-hidden rounded-full py-6 px-20 bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-black text-3xl md:text-5xl shadow-[0_0_40px_rgba(251,191,36,0.6)] transform transition-all duration-300 border-4 border-yellow-200 ${isGameActive || isGameOver ? 'opacity-60 grayscale cursor-not-allowed scale-95' : 'hover:scale-105 hover:shadow-[0_0_60px_rgba(251,191,36,0.8)] hover:-translate-y-1 active:scale-95 active:translate-y-1'}`}
+                            >
                                 <div className="absolute inset-0 bg-white/30 group-hover:translate-x-full transition-transform duration-700 ease-in-out skew-x-12 origin-left"></div>
                                 <div className="flex items-center gap-4 relative z-10 uppercase tracking-widest drop-shadow-md">
                                     <RotateCwIcon className={`w-8 h-8 md:w-12 md:h-12 ${isGameActive ? 'animate-spin' : ''}`} />
-                                    <span>{isGameActive ? 'Sorteando...' : (isGameOver ? 'Fin del Sorteo' : '¡SORTEAR!')}</span>
+                                    <span>
+                                        {isGameActive ? 'Sorteando...' : 
+                                         (isGameOver ? 'Fin del Sorteo' : 
+                                         (showWinner ? 'Siguiente' : '¡SORTEAR!'))}
+                                    </span>
                                 </div>
                             </button>
                             <button onClick={handleReset} className="text-white/60 hover:text-white hover:bg-white/10 px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2">
