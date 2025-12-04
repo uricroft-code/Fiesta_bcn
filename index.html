@@ -1,21 +1,199 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tómbola 2024</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-<script type="importmap">
-{
-  "imports": {
-    "react/": "https://aistudiocdn.com/react@^19.2.1/",
-    "react": "https://aistudiocdn.com/react@^19.2.1",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/"
-  }
-}
-</script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tómbola 2024</title>
+<script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <div id="root"></div>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center">
+<div class="w-full max-w-3xl mx-auto p-4">
+<div class="bg-slate-800 rounded-2xl shadow-lg p-6 md:p-8">
+<h1 class="text-3xl md:text-4xl font-bold text-center mb-2">
+        Tómbola 2024
+</h1>
+<p class="text-center text-slate-300 mb-6">
+        Generador de números sin repetir para sorteos, rifas o tómbolas.
+</p>
+ 
+      <!-- Configuración -->
+<div class="grid md:grid-cols-3 gap-4 mb-6">
+<div>
+<label class="block text-sm mb-1" for="totalNumbers">
+            Números totales
+</label>
+<input
+            id="totalNumbers"
+            type="number"
+            min="1"
+            max="10000"
+            value="100"
+            class="w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-2 text-sm"
+          />
+<p class="text-xs text-slate-400 mt-1">
+            Por defecto del 1 al 100.
+</p>
+</div>
+ 
+        <div class="flex flex-col justify-end">
+<button
+            id="btnInit"
+            class="w-full rounded-lg bg-sky-600 hover:bg-sky-500 transition px-3 py-2 text-sm font-semibold"
+>
+            Reiniciar tómbola
+</button>
+</div>
+ 
+        <div class="flex flex-col justify-end">
+<button
+            id="btnDownload"
+            class="w-full rounded-lg border border-slate-600 hover:bg-slate-700 transition px-3 py-2 text-sm"
+>
+            Descargar histórico (.txt)
+</button>
+</div>
+</div>
+ 
+      <!-- Número actual -->
+<div class="bg-slate-900 rounded-2xl border border-slate-700 p-6 mb-6 flex flex-col items-center">
+<p class="text-sm text-slate-400 mb-2">
+          Número extraído
+</p>
+<div
+          id="currentNumber"
+          class="text-6xl md:text-7xl font-extrabold tracking-widest mb-3"
+>
+          —
+</div>
+<p id="remaining" class="text-sm text-slate-400">
+          Tómbola sin iniciar.
+</p>
+<button
+          id="btnDraw"
+          class="mt-4 rounded-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-600 disabled:cursor-not-allowed transition px-6 py-2 text-sm font-semibold"
+          disabled
+>
+          Sacar número
+</button>
+</div>
+ 
+      <!-- Histórico -->
+<div class="grid md:grid-cols-2 gap-4">
+<div class="bg-slate-900 rounded-xl border border-slate-700 p-4 max-h-64 overflow-auto">
+<h2 class="text-sm font-semibold mb-2">
+            Números ya extraídos
+</h2>
+<ul id="historyList" class="text-sm text-slate-200 space-y-1"></ul>
+</div>
+ 
+        <div class="bg-slate-900 rounded-xl border border-slate-700 p-4 max-h-64 overflow-auto">
+<h2 class="text-sm font-semibold mb-2">
+            Números restantes
+</h2>
+<div id="remainingList" class="text-sm text-slate-200 flex flex-wrap gap-1"></div>
+</div>
+</div>
+</div>
+ 
+    <p class="mt-4 text-xs text-center text-slate-500">
+      Usa este enlace y compártelo con quien quieras para gestionar la tómbola.
+</p>
+</div>
+ 
+  <script>
+    const totalInput = document.getElementById("totalNumbers");
+    const btnInit = document.getElementById("btnInit");
+    const btnDraw = document.getElementById("btnDraw");
+    const btnDownload = document.getElementById("btnDownload");
+    const currentNumberEl = document.getElementById("currentNumber");
+    const remainingText = document.getElementById("remaining");
+    const historyList = document.getElementById("historyList");
+    const remainingList = document.getElementById("remainingList");
+ 
+    let pool = [];
+    let history = [];
+ 
+    function render() {
+      // Texto de resumen
+      if (pool.length === 0 && history.length === 0) {
+        remainingText.textContent = "Tómbola sin iniciar.";
+      } else if (pool.length === 0) {
+        remainingText.textContent = "No quedan números disponibles.";
+      } else {
+        remainingText.textContent = pool.length + " números restantes.";
+      }
+ 
+      // Histórico
+      historyList.innerHTML = "";
+      history.forEach((n, i) => {
+        const li = document.createElement("li");
+        li.textContent = (i + 1) + ". " + n;
+        historyList.appendChild(li);
+      });
+ 
+      // Números restantes
+      remainingList.innerHTML = "";
+      pool.forEach((n) => {
+        const span = document.createElement("span");
+        span.textContent = n;
+        span.className =
+          "inline-flex items-center justify-center px-2 py-1 rounded bg-slate-800 text-xs";
+        remainingList.appendChild(span);
+      });
+ 
+      // Botón sacar número
+      btnDraw.disabled = pool.length === 0;
+    }
+ 
+    function initTombola() {
+      const total = parseInt(totalInput.value, 10);
+      if (isNaN(total) || total <= 0) {
+        alert("Introduce un número total válido (mayor que 0).");
+        return;
+      }
+      pool = [];
+      history = [];
+      for (let i = 1; i <= total; i++) {
+        pool.push(i);
+      }
+      currentNumberEl.textContent = "—";
+      render();
+    }
+ 
+    function drawNumber() {
+      if (pool.length === 0) {
+        alert("Ya no quedan números disponibles.");
+        return;
+      }
+      const idx = Math.floor(Math.random() * pool.length);
+      const n = pool.splice(idx, 1)[0];
+      history.unshift(n); // último número arriba
+      currentNumberEl.textContent = n;
+      render();
+    }
+ 
+    function downloadHistory() {
+      if (history.length === 0) {
+        alert("Todavía no se ha extraído ningún número.");
+        return;
+      }
+      const content =
+        "Histórico de números extraídos (último primero):\n\n" +
+        history.join("\n");
+      const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "tombola_2024_historial.txt";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+ 
+    btnInit.addEventListener("click", initTombola);
+    btnDraw.addEventListener("click", drawNumber);
+    btnDownload.addEventListener("click", downloadHistory);
+</script>
 </body>
 </html>
