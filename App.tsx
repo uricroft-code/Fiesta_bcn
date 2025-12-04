@@ -108,8 +108,8 @@ const App: React.FC = () => {
                     // Show Banner
                     setShowWinner(true);
                     
-                    // Auto hide banner later
-                    setTimeout(() => setShowWinner(false), 8000);
+                    // Auto hide banner later (optional, keeps UI clean)
+                    // setTimeout(() => setShowWinner(false), 8000);
                 }
             }, numberIntervalTime);
 
@@ -138,20 +138,22 @@ const App: React.FC = () => {
   const isGameOver = prizes.length === 0 || numbers.length === 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-500 to-red-500 p-4 md:p-8 font-sans">
+    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-500 to-red-500 p-4 md:p-8 font-sans selection:bg-yellow-300 selection:text-black">
       <div className="max-w-7xl mx-auto relative">
         
         {/* Info Modal */}
         <InfoModal isOpen={showInfo} onClose={() => setShowInfo(false)} />
 
         {/* Header */}
-        <header className="relative text-center mb-10 pt-4">
-          <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-3 flex items-center justify-center gap-4 drop-shadow-md">
+        <header className="relative text-center mb-8 pt-4">
+          <div className="flex items-center justify-center gap-4 mb-2">
             <TrophyIcon className="w-10 h-10 md:w-16 md:h-16 text-yellow-300 animate-bounce" />
-            <span>TÓMBOLA 2024</span>
+            <h1 className="text-4xl md:text-6xl font-black text-white drop-shadow-lg tracking-tight">
+              TÓMBOLA 2024
+            </h1>
             <TrophyIcon className="w-10 h-10 md:w-16 md:h-16 text-yellow-300 animate-bounce" />
-          </h1>
-          <p className="text-white text-lg md:text-xl font-light opacity-90 tracking-wide">
+          </div>
+          <p className="text-white text-lg md:text-xl font-medium opacity-90 tracking-wide uppercase">
             ¡Sorteo de premios en vivo!
           </p>
 
@@ -170,7 +172,7 @@ const App: React.FC = () => {
         )}
 
         {/* Main Panels */}
-        <div className="grid md:grid-cols-2 gap-8 mb-8">
+        <div className="grid md:grid-cols-2 gap-8 mb-10">
           
           {/* Prize Panel */}
           <RaffleCard
@@ -179,7 +181,7 @@ const App: React.FC = () => {
             remainingCount={prizes.length}
             currentValue={currentPrize}
             isSpinning={isSpinningPrize}
-            disabled={true} // Controlled by auto spin
+            disabled={true} 
             themeColor="pink"
             spinButtonText="Girar Premio"
             hideButton={true}
@@ -192,45 +194,44 @@ const App: React.FC = () => {
             remainingCount={numbers.length}
             currentValue={currentNumber}
             isSpinning={isSpinningNumber}
-            disabled={true} // Controlled by auto spin
+            disabled={true}
             themeColor="blue"
             spinButtonText="Girar Número"
             hideButton={true}
           />
         </div>
 
-        {/* BIG CENTRAL BUTTON */}
-        <div className="flex justify-center mb-12">
+        {/* SINGLE CENTRAL BUTTON - ACTION AREA */}
+        <div className="flex flex-col items-center justify-center mb-12 gap-6">
            <button
              onClick={handleAutoSpin}
              disabled={isGameActive || isGameOver || showWinner}
              className={`
-               group relative overflow-hidden rounded-full py-6 px-16
+               group relative overflow-hidden rounded-full py-6 px-20
                bg-gradient-to-r from-yellow-400 to-orange-500
-               text-white font-black text-2xl md:text-4xl shadow-2xl
+               text-white font-black text-3xl md:text-5xl shadow-[0_0_40px_rgba(251,191,36,0.6)]
                transform transition-all duration-300
+               border-4 border-yellow-200
                ${isGameActive || isGameOver || showWinner
-                 ? 'opacity-50 grayscale cursor-not-allowed scale-95' 
-                 : 'hover:scale-110 hover:shadow-orange-500/50 hover:rotate-1 active:scale-95'
+                 ? 'opacity-60 grayscale cursor-not-allowed scale-95' 
+                 : 'hover:scale-105 hover:shadow-[0_0_60px_rgba(251,191,36,0.8)] hover:-translate-y-1 active:scale-95 active:translate-y-1'
                }
              `}
            >
-             <div className="absolute inset-0 bg-white/20 group-hover:translate-x-full transition-transform duration-700 ease-in-out skew-x-12 origin-left"></div>
-             <div className="flex items-center gap-4 relative z-10 uppercase tracking-widest">
-                <RotateCwIcon className={`w-8 h-8 md:w-10 md:h-10 ${isGameActive ? 'animate-spin' : ''}`} />
-                {isGameActive ? 'Sorteando...' : (isGameOver ? 'Fin del Sorteo' : '¡SORTEAR!')}
+             <div className="absolute inset-0 bg-white/30 group-hover:translate-x-full transition-transform duration-700 ease-in-out skew-x-12 origin-left"></div>
+             <div className="flex items-center gap-4 relative z-10 uppercase tracking-widest drop-shadow-md">
+                <RotateCwIcon className={`w-8 h-8 md:w-12 md:h-12 ${isGameActive ? 'animate-spin' : ''}`} />
+                <span>{isGameActive ? 'Sorteando...' : (isGameOver ? 'Fin del Sorteo' : '¡SORTEAR!')}</span>
              </div>
            </button>
-        </div>
 
-        {/* Reset Action */}
-        <div className="flex justify-center mb-8">
-          <button
+           {/* Small Reset Button underneath */}
+           <button
             onClick={handleReset}
-            className="group bg-red-500/80 hover:bg-red-600 text-white font-bold py-3 px-8 rounded-full flex items-center gap-2 transition-all backdrop-blur-sm border border-red-400 hover:shadow-lg hover:scale-105 active:scale-95 text-sm"
+            className="text-white/60 hover:text-white hover:bg-white/10 px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2"
           >
-            <TrashIcon className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-            Reiniciar Todo
+            <TrashIcon className="w-4 h-4" />
+            Reiniciar Tómbola
           </button>
         </div>
 
@@ -238,8 +239,8 @@ const App: React.FC = () => {
         <HistoryList winners={winners} />
 
         {/* Footer */}
-        <footer className="text-center text-white/60 text-sm mt-12 pb-4">
-          <p>&copy; {new Date().getFullYear()} Evento Tómbola. Buena suerte a todos.</p>
+        <footer className="text-center text-white/50 text-sm mt-12 pb-4">
+          <p>&copy; {new Date().getFullYear()} Evento Tómbola</p>
         </footer>
 
       </div>
