@@ -4,32 +4,291 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tómbola 2024</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
-    <style>
-      body { font-family: 'Inter', sans-serif; }
-      
-      /* Animation keyframes required for components */
-      @keyframes fade-in-up {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-      .animate-fade-in-up { 
-        animation: fade-in-up 0.5s ease-out forwards; 
-      }
-    </style>
-<script type="importmap">
-{
-  "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.1",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
-    "react/": "https://aistudiocdn.com/react@^19.2.1/"
-  }
-}
-</script>
 </head>
 <body>
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        // Iconos SVG
+        const Gift = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+            </svg>
+        );
+
+        const Users = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+        );
+
+        const RotateCw = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+        );
+
+        const Trophy = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+            </svg>
+        );
+
+        const Trash2 = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+        );
+
+        function TombolaRuleta() {
+            const [premios, setPremios] = useState([
+                'Billetes de Avión',
+                'Maleta de Viaje',
+                'Maletín Grande de Herramientas',
+                'Maletín Grande de Herramientas',
+                'Maletín Grande de Herramientas',
+                'Maletín Grande de Herramientas',
+                'Maletín Grande de Herramientas',
+                'Maletín Grande de Herramientas',
+                'Maletín Pequeño de Herramientas',
+                'Maletín Pequeño de Herramientas',
+                'Maletín Pequeño de Herramientas',
+                'Maletín Pequeño de Herramientas',
+                'Mochila',
+                'Mochila',
+                'Mochila',
+                'Mochila',
+                'Smartwatch Amazfit GTR 3 Pro',
+                'Smartphone Xiaomi POCO X7',
+                'Smartwatch Amazfit Bip 6 (Gris)',
+                'Smartwatch Amazfit Bip 6 (Negro)',
+                'Tablet Xiaomi Redmi Pad Pro 12.1"',
+                'Tablet Xiaomi Redmi Pad 2 11"',
+                'Smartphone Xiaomi Redmi 15',
+                'Mochila',
+                'Mochila',
+                'Mochila',
+                'Mochila',
+                'Mochila'
+            ]);
+            const [numeros, setNumeros] = useState(Array.from({length: 97}, (_, i) => i + 901));
+            const [premioActual, setPremioActual] = useState(null);
+            const [numeroActual, setNumeroActual] = useState(null);
+            const [girandoPremio, setGirandoPremio] = useState(false);
+            const [girandoNumero, setGirandoNumero] = useState(false);
+            const [ganadores, setGanadores] = useState([]);
+            const [mostrarGanador, setMostrarGanador] = useState(false);
+            const [contadorSorteos, setContadorSorteos] = useState(0);
+
+            const girarRuletaPremio = () => {
+                if (premios.length === 0 || girandoPremio) return;
+                setGirandoPremio(true);
+                setMostrarGanador(false);
+                
+                let contador = 0;
+                const intervalo = setInterval(() => {
+                    setPremioActual(premios[Math.floor(Math.random() * premios.length)]);
+                    contador++;
+                    if (contador > 20) {
+                        clearInterval(intervalo);
+                        const premioGanador = premios[Math.floor(Math.random() * premios.length)];
+                        setPremioActual(premioGanador);
+                        setGirandoPremio(false);
+                    }
+                }, 100);
+            };
+
+            const girarRuletaNumero = () => {
+                if (numeros.length === 0 || !premioActual || girandoNumero) return;
+                setGirandoNumero(true);
+                
+                let contador = 0;
+                const intervalo = setInterval(() => {
+                    setNumeroActual(numeros[Math.floor(Math.random() * numeros.length)]);
+                    contador++;
+                    if (contador > 30) {
+                        clearInterval(intervalo);
+                        const numeroGanador = numeros[Math.floor(Math.random() * numeros.length)];
+                        setNumeroActual(numeroGanador);
+                        setGirandoNumero(false);
+                        setGanadores(prev => [{premio: premioActual, numero: numeroGanador, id: Date.now()}, ...prev]);
+                        setPremios(prev => prev.filter(p => p !== premioActual));
+                        setNumeros(prev => prev.filter(n => n !== numeroGanador));
+                        setPremioActual(null);
+                        setMostrarGanador(true);
+                        setContadorSorteos(prev => prev + 1);
+                        setTimeout(() => setMostrarGanador(false), 5000);
+                    }
+                }, 80);
+            };
+
+            const reiniciar = () => {
+                if (confirm('¿Estás seguro de reiniciar la tómbola? Se perderán todos los ganadores.')) {
+                    setPremios([
+                        'Billetes de Avión',
+                        'Maleta de Viaje',
+                        'Maletín Grande de Herramientas',
+                        'Maletín Grande de Herramientas',
+                        'Maletín Grande de Herramientas',
+                        'Maletín Grande de Herramientas',
+                        'Maletín Grande de Herramientas',
+                        'Maletín Grande de Herramientas',
+                        'Maletín Pequeño de Herramientas',
+                        'Maletín Pequeño de Herramientas',
+                        'Maletín Pequeño de Herramientas',
+                        'Maletín Pequeño de Herramientas',
+                        'Mochila',
+                        'Mochila',
+                        'Mochila',
+                        'Mochila',
+                        'Smartwatch Amazfit GTR 3 Pro',
+                        'Smartphone Xiaomi POCO X7',
+                        'Smartwatch Amazfit Bip 6 (Gris)',
+                        'Smartwatch Amazfit Bip 6 (Negro)',
+                        'Tablet Xiaomi Redmi Pad Pro 12.1"',
+                        'Tablet Xiaomi Redmi Pad 2 11"',
+                        'Smartphone Xiaomi Redmi 15',
+                        'Mochila',
+                        'Mochila',
+                        'Mochila',
+                        'Mochila',
+                        'Mochila'
+                    ]);
+                    setNumeros(Array.from({length: 97}, (_, i) => i + 901));
+                    setPremioActual(null);
+                    setNumeroActual(null);
+                    setGanadores([]);
+                    setMostrarGanador(false);
+                    setContadorSorteos(0);
+                }
+            };
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-500 to-red-500 p-4">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="text-center mb-8">
+                            <h1 className="text-5xl font-bold text-white mb-2 flex items-center justify-center gap-3">
+                                <Trophy className="w-12 h-12" />
+                                TÓMBOLA 2024
+                                <Trophy className="w-12 h-12" />
+                            </h1>
+                            <p className="text-white text-xl">¡Doble ruleta de premios!</p>
+                        </div>
+
+                        {mostrarGanador && ganadores[0] && (
+                            <div className="mb-6 bg-yellow-400 border-4 border-yellow-600 rounded-lg p-6 text-center animate-pulse">
+                                <h2 className="text-3xl font-bold text-gray-900 mb-2">🎉 ¡GANADOR! 🎉</h2>
+                                <p className="text-2xl font-bold text-gray-800">
+                                    Número {ganadores[0].numero} ganó: {ganadores[0].premio}
+                                </p>
+                            </div>
+                        )}
+
+                        <div className="grid md:grid-cols-2 gap-6 mb-8">
+                            <div className="bg-white rounded-xl shadow-2xl p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                                        <Gift className="w-6 h-6 text-pink-500" />
+                                        Premios
+                                    </h2>
+                                    <span className="bg-pink-500 text-white px-3 py-1 rounded-full font-bold">
+                                        {premios.length} restantes
+                                    </span>
+                                </div>
+                                <div className="bg-gradient-to-br from-pink-100 to-purple-100 rounded-lg p-8 mb-4 min-h-[200px] flex items-center justify-center border-4 border-pink-300">
+                                    <p className="text-3xl font-bold text-center text-gray-800">
+                                        {premioActual || '🎁'}
+                                    </p>
+                                </div>
+
+                                <button
+                                    onClick={girarRuletaPremio}
+                                    disabled={premios.length === 0 || girandoPremio}
+                                    className="w-full bg-pink-500 hover:bg-pink-600 disabled:bg-gray-400 text-white font-bold py-4 px-6 rounded-lg flex items-center justify-center gap-2 text-xl transition-all"
+                                >
+                                    <RotateCw className={`w-6 h-6 ${girandoPremio ? 'animate-spin' : ''}`} />
+                                    {girandoPremio ? 'Girando...' : 'Girar Premio'}
+                                </button>
+                            </div>
+
+                            <div className="bg-white rounded-xl shadow-2xl p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                                        <Users className="w-6 h-6 text-blue-500" />
+                                        Números
+                                    </h2>
+                                    <span className="bg-blue-500 text-white px-3 py-1 rounded-full font-bold">
+                                        {numeros.length} restantes
+                                    </span>
+                                </div>
+                                <div className="bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg p-8 mb-4 min-h-[200px] flex items-center justify-center border-4 border-blue-300">
+                                    <p className="text-6xl font-bold text-gray-800">
+                                        {numeroActual || '?'}
+                                    </p>
+                                </div>
+
+                                <button
+                                    onClick={girarRuletaNumero}
+                                    disabled={!premioActual || numeros.length === 0 || girandoNumero}
+                                    className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white font-bold py-4 px-6 rounded-lg flex items-center justify-center gap-2 text-xl transition-all"
+                                >
+                                    <RotateCw className={`w-6 h-6 ${girandoNumero ? 'animate-spin' : ''}`} />
+                                    {girandoNumero ? 'Girando...' : 'Girar Número'}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="text-center mb-6">
+                            <button
+                                onClick={reiniciar}
+                                className="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-8 rounded-lg flex items-center gap-2 mx-auto transition-all"
+                            >
+                                <Trash2 className="w-5 h-5" />
+                                Reiniciar Tómbola
+                            </button>
+                        </div>
+
+                        {ganadores.length > 0 && (
+                            <div className="bg-white rounded-xl shadow-2xl p-6">
+                                <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                    <Trophy className="w-6 h-6 text-yellow-500" />
+                                    Ganadores ({ganadores.length})
+                                </h2>
+                                <div className="overflow-auto max-h-96">
+                                    <table className="w-full">
+                                        <thead className="bg-gray-100 sticky top-0">
+                                            <tr>
+                                                <th className="px-4 py-2 text-left">#</th>
+                                                <th className="px-4 py-2 text-left">Número</th>
+                                                <th className="px-4 py-2 text-left">Premio</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {ganadores.map((g, idx) => (
+                                                <tr key={g.id} className="border-b hover:bg-gray-50">
+                                                    <td className="px-4 py-3 font-bold">{idx + 1}</td>
+                                                    <td className="px-4 py-3 font-bold text-blue-600 text-lg">{g.numero}</td>
+                                                    <td className="px-4 py-3">{g.premio}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<TombolaRuleta />);
+    </script>
 </body>
 </html>
