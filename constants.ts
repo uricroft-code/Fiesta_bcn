@@ -1,33 +1,20 @@
-export const INITIAL_PRIZES = [
-  'Billetes de Avión',
-  'Maleta de Viaje',
-  'Maletín Grande de Herramientas 1',
-  'Maletín Grande de Herramientas 2',
-  'Maletín Grande de Herramientas 3',
-  'Maletín Grande de Herramientas 4',
-  'Maletín Grande de Herramientas 5',
-  'Maletín Grande de Herramientas 6',
-  'Maletín Pequeño de Herramientas 1',
-  'Maletín Pequeño de Herramientas 2',
-  'Maletín Pequeño de Herramientas 3',
-  'Maletín Pequeño de Herramientas 4',
-  'Mochila 1',
-  'Mochila 2',
-  'Mochila 3',
-  'Mochila 4',
-  'Smartwatch Amazfit GTR 3 Pro',
-  'Smartphone Xiaomi POCO X7',
-  'Smartwatch Amazfit Bip 6 (Gris)',
-  'Smartwatch Amazfit Bip 6 (Negro)',
-  'Tablet Xiaomi Redmi Pad Pro 12.1"',
-  'Tablet Xiaomi Redmi Pad 2 11"',
-  'Smartphone Xiaomi Redmi 15',
-  'Mochila 5',
-  'Mochila 6',
-  'Mochila 7',
-  'Mochila 8',
-  'Mochila 9'
+
+export const PRIZE_CONFIG = [
+  { name: 'Billetes de Avión', count: 1 },
+  { name: 'Maleta de Viaje', count: 1 },
+  { name: 'Maletín Grande de Herramientas', count: 6 },
+  { name: 'Maletín Pequeño de Herramientas', count: 4 },
+  { name: 'Mochila', count: 9 },
+  { name: 'Smartwatch Amazfit GTR 3 Pro', count: 1 },
+  { name: 'Smartphone Xiaomi POCO X7', count: 1 },
+  { name: 'Smartwatch Amazfit Bip 6 (Gris)', count: 1 },
+  { name: 'Smartwatch Amazfit Bip 6 (Negro)', count: 1 },
+  { name: 'Tablet Xiaomi Redmi Pad Pro 12.1"', count: 1 },
+  { name: 'Tablet Xiaomi Redmi Pad 2 11"', count: 1 },
+  { name: 'Smartphone Xiaomi Redmi 15', count: 1 },
 ];
+
+export const INITIAL_PRIZES = PRIZE_CONFIG.flatMap(item => Array(item.count).fill(item.name));
 
 export const INITIAL_NUMBER_START = 901;
 export const INITIAL_NUMBER_COUNT = 97;

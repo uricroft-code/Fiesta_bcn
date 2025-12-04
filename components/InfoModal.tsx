@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { XIcon, TrophyIcon } from './Icons';
 import { INITIAL_PRIZES, INITIAL_NUMBER_COUNT, INITIAL_NUMBER_START } from '../constants';
@@ -58,9 +59,10 @@ const InfoModal: React.FC<InfoModalProps> = ({ isOpen, onClose }) => {
           <div className="border-t pt-4 mt-4">
             <h3 className="font-bold text-gray-900 mb-2">Instrucciones:</h3>
             <ol className="list-decimal list-inside space-y-1 text-gray-600 ml-1">
-              <li>Pulsa <strong>Girar Premio</strong> para seleccionar qué se sortea.</li>
-              <li>Pulsa <strong>Girar Número</strong> para encontrar al ganador.</li>
-              <li>Repite hasta que se agoten los premios.</li>
+              <li>Pulsa el botón grande <strong>¡SORTEAR!</strong></li>
+              <li>La tómbola seleccionará primero un <strong>premio</strong> al azar.</li>
+              <li>Automáticamente después, buscará el <strong>número ganador</strong>.</li>
+              <li>¡El resultado aparecerá en pantalla!</li>
             </ol>
           </div>
         </div>

@@ -1,7 +1,8 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+
+import React, { useState, useCallback } from 'react';
 import { INITIAL_PRIZES, INITIAL_NUMBER_START, INITIAL_NUMBER_COUNT } from './constants';
 import { Winner } from './types';
-import { GiftIcon, UsersIcon, TrophyIcon, TrashIcon, InfoIcon } from './components/Icons';
+import { GiftIcon, UsersIcon, TrophyIcon, TrashIcon, InfoIcon, RotateCwIcon } from './components/Icons';
 import WinnerBanner from './components/WinnerBanner';
 import RaffleCard from './components/RaffleCard';
 import HistoryList from './components/HistoryList';
@@ -10,7 +11,11 @@ import InfoModal from './components/InfoModal';
 const App: React.FC = () => {
   // --- State ---
   const [prizes, setPrizes] = useState<string[]>(INITIAL_PRIZES);
-  const [numbers, setNumbers] = useState<number[]>([]);
+  
+  // Initialize numbers lazily
+  const [numbers, setNumbers] = useState<number[]>(() => 
+    Array.from({ length: INITIAL_NUMBER_COUNT }, (_, i) => i + INITIAL_NUMBER_START)
+  );
   
   const [currentPrize, setCurrentPrize] = useState<string | null>(null);
   const [currentNumber, setCurrentNumber] = useState<number | null>(null);
@@ -22,101 +27,97 @@ const App: React.FC = () => {
   const [showWinner, setShowWinner] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
 
-  // Initialize numbers once
-  useEffect(() => {
-    const initialNumbers = Array.from(
-      { length: INITIAL_NUMBER_COUNT },
-      (_, i) => i + INITIAL_NUMBER_START
-    );
-    setNumbers(initialNumbers);
-  }, []);
-
   // --- Handlers ---
 
-  const handleSpinPrize = useCallback(() => {
-    if (prizes.length === 0 || isSpinningPrize) return;
-    
+  const handleAutoSpin = useCallback(() => {
+    // Prevent spin if invalid state
+    if (prizes.length === 0 || numbers.length === 0 || isSpinningPrize || isSpinningNumber || showWinner) return;
+
+    // Reset previous winner view
+    setShowWinner(false);
+    setCurrentPrize(null);
+    setCurrentNumber(null);
+
+    // --- STEP 1: SPIN PRIZE ---
     setIsSpinningPrize(true);
-    setShowWinner(false); // Hide previous winner if any
 
-    let counter = 0;
-    const maxIterations = 20;
-    const intervalTime = 100;
+    let prizeCounter = 0;
+    const prizeMaxIterations = 20;
+    const prizeIntervalTime = 80;
 
-    const intervalId = setInterval(() => {
-      const randomIndex = Math.floor(Math.random() * prizes.length);
-      setCurrentPrize(prizes[randomIndex]);
-      counter++;
+    const prizeInterval = setInterval(() => {
+      const randomPrize = prizes[Math.floor(Math.random() * prizes.length)];
+      setCurrentPrize(randomPrize);
+      prizeCounter++;
 
-      if (counter > maxIterations) {
-        clearInterval(intervalId);
-        // Final selection happens here
-        const finalIndex = Math.floor(Math.random() * prizes.length);
-        const selectedPrize = prizes[finalIndex];
-        setCurrentPrize(selectedPrize);
+      if (prizeCounter > prizeMaxIterations) {
+        clearInterval(prizeInterval);
+        
+        // Final Prize Selection
+        const finalPrizeIndex = Math.floor(Math.random() * prizes.length);
+        const finalPrize = prizes[finalPrizeIndex];
+        setCurrentPrize(finalPrize);
         setIsSpinningPrize(false);
+
+        // --- STEP 2: WAIT & SPIN NUMBER ---
+        setTimeout(() => {
+            setIsSpinningNumber(true);
+            
+            let numberCounter = 0;
+            const numberMaxIterations = 30;
+            const numberIntervalTime = 60;
+
+            const numberInterval = setInterval(() => {
+                const randomNumber = numbers[Math.floor(Math.random() * numbers.length)];
+                setCurrentNumber(randomNumber);
+                numberCounter++;
+
+                if (numberCounter > numberMaxIterations) {
+                    clearInterval(numberInterval);
+
+                    // Final Number Selection
+                    const finalNumberIndex = Math.floor(Math.random() * numbers.length);
+                    const finalNumber = numbers[finalNumberIndex];
+                    setCurrentNumber(finalNumber);
+                    setIsSpinningNumber(false);
+
+                    // --- STEP 3: REGISTER WINNER ---
+                    const newWinner: Winner = {
+                        id: Date.now(),
+                        premio: finalPrize,
+                        numero: finalNumber,
+                        timestamp: new Date()
+                    };
+
+                    setWinners(prev => [newWinner, ...prev]);
+
+                    // Remove used items
+                    setPrizes(prev => {
+                        // Remove only ONE instance of the prize
+                        const index = prev.indexOf(finalPrize);
+                        if (index > -1) {
+                            const newPrizes = [...prev];
+                            newPrizes.splice(index, 1);
+                            return newPrizes;
+                        }
+                        return prev;
+                    });
+
+                    setNumbers(prev => prev.filter(n => n !== finalNumber));
+
+                    // Show Banner
+                    setShowWinner(true);
+                    
+                    // Auto hide banner later
+                    setTimeout(() => setShowWinner(false), 8000);
+                }
+            }, numberIntervalTime);
+
+        }, 500); // 0.5s delay between prize and number
       }
-    }, intervalTime);
-  }, [prizes, isSpinningPrize]);
+    }, prizeIntervalTime);
 
-  const handleSpinNumber = useCallback(() => {
-    if (numbers.length === 0 || !currentPrize || isSpinningNumber) return;
-
-    setIsSpinningNumber(true);
-
-    let counter = 0;
-    const maxIterations = 30;
-    const intervalTime = 80;
-
-    const intervalId = setInterval(() => {
-      const randomIndex = Math.floor(Math.random() * numbers.length);
-      setCurrentNumber(numbers[randomIndex]);
-      counter++;
-
-      if (counter > maxIterations) {
-        clearInterval(intervalId);
-        
-        // Final selection
-        const finalIndex = Math.floor(Math.random() * numbers.length);
-        const winningNumber = numbers[finalIndex];
-        setCurrentNumber(winningNumber);
-        
-        // Update State with result
-        setIsSpinningNumber(false);
-        
-        const newWinner: Winner = {
-          id: Date.now(),
-          premio: currentPrize,
-          numero: winningNumber,
-          timestamp: new Date()
-        };
-
-        // Update lists
-        setWinners(prev => [newWinner, ...prev]);
-        
-        // IMPORTANT: We must remove only ONE instance of the prize, 
-        // because some prizes (like Mochila) appear multiple times.
-        setPrizes(prev => {
-          const index = prev.indexOf(currentPrize);
-          if (index > -1) {
-            const newPrizes = [...prev];
-            newPrizes.splice(index, 1);
-            return newPrizes;
-          }
-          return prev;
-        });
-
-        setNumbers(prev => prev.filter(n => n !== winningNumber));
-        
-        // Show winner banner
-        setShowWinner(true);
-        setCurrentPrize(null); // Reset current prize so we have to spin again
-        
-        // Auto hide banner after 8 seconds
-        setTimeout(() => setShowWinner(false), 8000);
-      }
-    }, intervalTime);
-  }, [numbers, currentPrize, isSpinningNumber]);
+  }, [prizes, numbers, isSpinningPrize, isSpinningNumber, showWinner]);
 
   const handleReset = useCallback(() => {
     if (window.confirm('¿Estás seguro de reiniciar la tómbola? Se perderán todos los ganadores y el historial.')) {
@@ -133,6 +134,8 @@ const App: React.FC = () => {
   }, []);
 
   // --- Render ---
+  const isGameActive = isSpinningPrize || isSpinningNumber;
+  const isGameOver = prizes.length === 0 || numbers.length === 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-500 to-red-500 p-4 md:p-8 font-sans">
@@ -152,10 +155,9 @@ const App: React.FC = () => {
             ¡Sorteo de premios en vivo!
           </p>
 
-          {/* Info Button - Absolute positioned on desktop, relative on mobile if needed, but let's keep it simple */}
           <button 
             onClick={() => setShowInfo(true)}
-            className="absolute top-0 right-0 p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-all"
+            className="absolute top-0 right-0 p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-white/50"
             title="Información"
           >
             <InfoIcon className="w-8 h-8" />
@@ -168,7 +170,7 @@ const App: React.FC = () => {
         )}
 
         {/* Main Panels */}
-        <div className="grid md:grid-cols-2 gap-8 mb-10">
+        <div className="grid md:grid-cols-2 gap-8 mb-8">
           
           {/* Prize Panel */}
           <RaffleCard
@@ -177,10 +179,10 @@ const App: React.FC = () => {
             remainingCount={prizes.length}
             currentValue={currentPrize}
             isSpinning={isSpinningPrize}
-            onSpin={handleSpinPrize}
-            disabled={prizes.length === 0 || isSpinningPrize || isSpinningNumber || showWinner}
+            disabled={true} // Controlled by auto spin
             themeColor="pink"
             spinButtonText="Girar Premio"
+            hideButton={true}
           />
 
           {/* Number Panel */}
@@ -190,21 +192,45 @@ const App: React.FC = () => {
             remainingCount={numbers.length}
             currentValue={currentNumber}
             isSpinning={isSpinningNumber}
-            onSpin={handleSpinNumber}
-            disabled={!currentPrize || numbers.length === 0 || isSpinningNumber || isSpinningPrize}
+            disabled={true} // Controlled by auto spin
             themeColor="blue"
             spinButtonText="Girar Número"
+            hideButton={true}
           />
+        </div>
+
+        {/* BIG CENTRAL BUTTON */}
+        <div className="flex justify-center mb-12">
+           <button
+             onClick={handleAutoSpin}
+             disabled={isGameActive || isGameOver || showWinner}
+             className={`
+               group relative overflow-hidden rounded-full py-6 px-16
+               bg-gradient-to-r from-yellow-400 to-orange-500
+               text-white font-black text-2xl md:text-4xl shadow-2xl
+               transform transition-all duration-300
+               ${isGameActive || isGameOver || showWinner
+                 ? 'opacity-50 grayscale cursor-not-allowed scale-95' 
+                 : 'hover:scale-110 hover:shadow-orange-500/50 hover:rotate-1 active:scale-95'
+               }
+             `}
+           >
+             <div className="absolute inset-0 bg-white/20 group-hover:translate-x-full transition-transform duration-700 ease-in-out skew-x-12 origin-left"></div>
+             <div className="flex items-center gap-4 relative z-10 uppercase tracking-widest">
+                <RotateCwIcon className={`w-8 h-8 md:w-10 md:h-10 ${isGameActive ? 'animate-spin' : ''}`} />
+                {isGameActive ? 'Sorteando...' : (isGameOver ? 'Fin del Sorteo' : '¡SORTEAR!')}
+             </div>
+           </button>
         </div>
 
         {/* Reset Action */}
         <div className="flex justify-center mb-8">
           <button
             onClick={handleReset}
-            className="group bg-red-500/80 hover:bg-red-600 text-white font-bold py-3 px-8 rounded-full flex items-center gap-2 transition-all backdrop-blur-sm border border-red-400 hover:shadow-lg hover:scale-105"
+            className="group bg-red-500/80 hover:bg-red-600 text-white font-bold py-3 px-8 rounded-full flex items-center gap-2 transition-all backdrop-blur-sm border border-red-400 hover:shadow-lg hover:scale-105 active:scale-95 text-sm"
           >
-            <TrashIcon className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-            Reiniciar Tómbola
+            <TrashIcon className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+            Reiniciar Todo
           </button>
         </div>
 
