@@ -1,12 +1,11 @@
-
 import React, { useState, useCallback } from 'react';
-import { INITIAL_PRIZES, INITIAL_NUMBER_START, INITIAL_NUMBER_COUNT } from './constants';
-import { Winner } from './types';
-import { GiftIcon, UsersIcon, TrophyIcon, TrashIcon, InfoIcon, RotateCwIcon } from './components/Icons';
-import WinnerBanner from './components/WinnerBanner';
-import RaffleCard from './components/RaffleCard';
-import HistoryList from './components/HistoryList';
-import InfoModal from './components/InfoModal';
+import { INITIAL_PRIZES, INITIAL_NUMBER_START, INITIAL_NUMBER_COUNT } from './constants.ts';
+import { Winner } from './types.ts';
+import { GiftIcon, UsersIcon, TrophyIcon, TrashIcon, InfoIcon, RotateCwIcon } from './components/Icons.tsx';
+import WinnerBanner from './components/WinnerBanner.tsx';
+import RaffleCard from './components/RaffleCard.tsx';
+import HistoryList from './components/HistoryList.tsx';
+import InfoModal from './components/InfoModal.tsx';
 
 const App: React.FC = () => {
   // --- State ---
@@ -108,8 +107,6 @@ const App: React.FC = () => {
                     // Show Banner
                     setShowWinner(true);
                     
-                    // Auto hide banner later (optional, keeps UI clean)
-                    // setTimeout(() => setShowWinner(false), 8000);
                 }
             }, numberIntervalTime);
 
@@ -135,7 +132,7 @@ const App: React.FC = () => {
 
   // --- Render ---
   const isGameActive = isSpinningPrize || isSpinningNumber;
-  const isGameOver = prizes.length === 0 || numbers.length === 0;
+  const isGameOver = prizes.length === 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-500 to-red-500 p-4 md:p-8 font-sans selection:bg-yellow-300 selection:text-black">

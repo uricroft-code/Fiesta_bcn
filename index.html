@@ -9,7 +9,6 @@
     <style>
       body { font-family: 'Inter', sans-serif; }
       
-      /* Animation keyframes required for components */
       @keyframes fade-in-up {
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
@@ -18,6 +17,9 @@
         animation: fade-in-up 0.5s ease-out forwards; 
       }
     </style>
+    <!-- Babel for transpiling TSX in the browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
     <script type="importmap">
 {
   "imports": {
@@ -31,7 +33,8 @@
 </head>
 <body>
     <div id="root"></div>
-    <!-- Using relative path ./index.tsx to support subfolder deployments -->
-    <script type="module" src="./index.tsx"></script>
+    
+    <!-- Load the main entry point with Babel handling TypeScript/JSX -->
+    <script type="text/babel" data-type="module" data-presets="react,typescript" src="./index.tsx"></script>
 </body>
 </html>

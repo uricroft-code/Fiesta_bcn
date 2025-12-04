@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { RotateCwIcon } from './Icons';
+import { RotateCwIcon } from './Icons.tsx';
 
 interface RaffleCardProps {
   title: string;

@@ -1,6 +1,6 @@
 import React from 'react';
-import { TrophyIcon } from './Icons';
-import { Winner } from '../types';
+import { TrophyIcon } from './Icons.tsx';
+import { Winner } from '../types.ts';
 
 interface HistoryListProps {
   winners: Winner[];

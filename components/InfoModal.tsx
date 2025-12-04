@@ -1,7 +1,6 @@
-
 import React from 'react';
-import { XIcon, TrophyIcon } from './Icons';
-import { INITIAL_PRIZES, INITIAL_NUMBER_COUNT, INITIAL_NUMBER_START } from '../constants';
+import { XIcon, TrophyIcon } from './Icons.tsx';
+import { INITIAL_PRIZES, INITIAL_NUMBER_COUNT, INITIAL_NUMBER_START } from '../constants.ts';
 
 interface InfoModalProps {
   isOpen: boolean;

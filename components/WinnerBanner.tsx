@@ -1,5 +1,5 @@
 import React from 'react';
-import { Winner } from '../types';
+import { Winner } from '../types.ts';
 
 interface WinnerBannerProps {
   winner: Winner;
