@@ -1,445 +1,542 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tómbola 2025</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tómbola 2025</title>
 
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
 
-    <!-- React & ReactDOM (UMD for simple browser usage) -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <!-- React & ReactDOM (UMD for simple browser usage) -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 
-    <!-- Babel for in-browser transpilation -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- ✅ SheetJS (XLSX) para exportar Excel -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-    <style>
-      body { font-family: 'Inter', sans-serif; }
+  <!-- Babel for in-browser transpilation -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-      @keyframes fade-in-up {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-      .animate-fade-in-up {
-        animation: fade-in-up 0.5s ease-out forwards;
-      }
-    </style>
-<script type="importmap">
-{
-  "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.1",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
-    "react/": "https://aistudiocdn.com/react@^19.2.1/"
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+
+    @keyframes fade-in-up {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in-up {
+      animation: fade-in-up 0.5s ease-out forwards;
+    }
+  </style>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "react": "https://aistudiocdn.com/react@^19.2.1",
+      "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
+      "react/": "https://aistudiocdn.com/react@^19.2.1/"
+    }
   }
-}
-</script>
+  </script>
 </head>
+
 <body>
-    <div id="root"></div>
+  <div id="root"></div>
 
-    <script type="text/babel">
-        const { useState, useCallback } = React;
+  <script type="text/babel">
+    const { useState, useCallback } = React;
 
-        // --- CONSTANTS ---
-        const PRIZE_CONFIG = [
-            { name: 'Billetes de Avión', count: 1 },
-            { name: 'Maleta de Viaje', count: 1 },
-            { name: 'Maletín Grande de Herramientas', count: 8 },
-            { name: 'Maletín Pequeño de Herramientas', count: 1 },
-            { name: 'Mochila', count: 9 },
-            { name: ' Amazfit GTR 3 Pro', count: 1 },
-            { name: 'Amazon Echo Dot', count: 2 },
-            { name: 'Xiamoni Poco x7 Pro', count: 2 },
-            { name: 'Amazfit Active 2', count: 2 },
-            { name: 'Xiaomi Redmi Buds 6', count: 2 },
-            { name: 'Xiamoni Redmi Pad Pro12', count: 2 },
-            { name: 'Entradas de patinaje', count: 9 },
-            { name: 'Maletin taladradora', count: 4 },
-            { name: 'Maletin Mediano', count: 2 }
-        ];
+    // --- CONSTANTS ---
+    const PRIZE_CONFIG = [
+      { name: 'Billetes de Avión', count: 1 },
+      { name: 'Maleta de Viaje', count: 1 },
+      { name: 'Maletín Grande de Herramientas', count: 8 },
+      { name: 'Maletín Pequeño de Herramientas', count: 1 },
+      { name: 'Mochila', count: 9 },
+      { name: ' Amazfit GTR 3 Pro', count: 1 },
+      { name: 'Amazon Echo Dot', count: 2 },
+      { name: 'Xiamoni Poco x7 Pro', count: 2 },
+      { name: 'Amazfit Active 2', count: 2 },
+      { name: 'Xiaomi Redmi Buds 6', count: 2 },
+      { name: 'Xiamoni Redmi Pad Pro12', count: 2 },
+      { name: 'Entradas de patinaje', count: 9 },
+      { name: 'Maletin taladradora', count: 4 },
+      { name: 'Maletin Mediano', count: 2 }
+    ];
 
-        // Generate the flat list of prizes based on counts
-        const INITIAL_PRIZES = PRIZE_CONFIG.flatMap(item => Array(item.count).fill(item.name));
+    // Flat list of prizes based on counts
+    const INITIAL_PRIZES = PRIZE_CONFIG.flatMap(item => Array(item.count).fill(item.name));
 
-        // ✅ NUEVO: IDs NO correlativos (pool completo)
-        const NON_CORRELATIVE_IDS = [
-          60003764,60004204,60003534,60003609,60003683,60003911,60003974,60004112,
-          60008007,60004115,60003541,60003637,60003920,60004241,60004220,60003712,
-          60003655,60003857,60004072,60004055,60003946,60003531,60004066,60004245,
-          60008797,60003680,60003684,60003809,60003915,60004243,60008018,60003647,
-          60003722,60009135,60003801,60003648,60003629,60009170,60003635,60003834,
-          60003880,60003926,60003945,60004005,60004239,60003970,60004039,60003999,
-          60008374,60003564,60003660,60003639,60004003,60003573,60004083,60008393,
-          60003697,60003703,60003734,60003755,60008801,60003559,60003750,60003853,
-          60003954,60004088,60004118,60004137,60004139,60004190,60003597,60003667,
-          60003674,60003825,60008019,60004067,60003914,60004113,60003859,60004027,
-          60003990,60003716,60004019,60008021,60004219,60003808,60003681,60003894,
-          60004175,60003828,60009169,60003707,60003733,60003685,60003900,60003754,
-          60004021,60003539,60004109,60008004,60003893,60003619,60003892,60003918,
-          60003740,60003925,60003768,60003645,60003804,60003972,60003686,60003544,
-          60003613,60003737,60003744,60003994,60009026,60003757,60003838,60003574,
-          60003682,60003956,60004015,60004193,60008308,60004211,60004059,60003719,
-          60003908,60008190,60004085,60004105,60004102,60004032,60009104,60003590,
-          60004111,60004047,60004231,60003538,60003993,60003800,60009171,60003837,
-          60003561,60003854,60003921,60003964,60004044,60008020,60003614,60008191,
-          60004020,60004136,60004062,60004120,60003924,60004161,60003782,60004167,
-          60004050,60003575,60004221,60004017,60003905,60003818,60003805,60003864,
-          60004121,60008361,60003931,60004171,60003979,60004196,60004084,60008309,
-          60003795,60003567,60003934,60004074,60004237,60009137,60003980,60003572,
-          60003767,60003949,60003963,60004170,60004174,60004046,60003878,60003606,
-          60004228,60003775,60003546,60008891,60008398,60004163,60004247,60003843,
-          60003649,60003533,60003862,60004058,60003698,60004038,60004206,60003788,
-          60003616,60004049,60003568,60004249,60003563,60009168,60003702,60004075,
-          60003605,60004091,60004068,60003883,60004251,60003540,60004077,60004129,
-          60004189,60003780,60009022,60004042,60004183,60003628,60004151,60003882,
-          60004178,60003621,60008963,60003819,60004004,60004031,60004250,60003783,
-          60004205,60004159,60003695,60009132,60009249,60003570,60003601,60004154,
-          60004227,60008750,60003933,60004208,60003550,60009024,60004096,60004122,
-          60004240,60003919,60003679,60003526,60003756,60003603,60003935,60003736,
-          60003822,60004216,60004104,60004209,60003814,60003694,60009174,60008006,
-          60003666,60003861,60004213,60003789,60008307,60008567,60009020
-        ];
+    // ✅ IDs NO correlativos (pool completo)
+    const NON_CORRELATIVE_IDS = [
+      60003764,60004204,60003534,60003609,60003683,60003911,60003974,60004112,
+      60008007,60004115,60003541,60003637,60003920,60004241,60004220,60003712,
+      60003655,60003857,60004072,60004055,60003946,60003531,60004066,60004245,
+      60008797,60003680,60003684,60003809,60003915,60004243,60008018,60003647,
+      60003722,60009135,60003801,60003648,60003629,60009170,60003635,60003834,
+      60003880,60003926,60003945,60004005,60004239,60003970,60004039,60003999,
+      60008374,60003564,60003660,60003639,60004003,60003573,60004083,60008393,
+      60003697,60003703,60003734,60003755,60008801,60003559,60003750,60003853,
+      60003954,60004088,60004118,60004137,60004139,60004190,60003597,60003667,
+      60003674,60003825,60008019,60004067,60003914,60004113,60003859,60004027,
+      60003990,60003716,60004019,60008021,60004219,60003808,60003681,60003894,
+      60004175,60003828,60009169,60003707,60003733,60003685,60003900,60003754,
+      60004021,60003539,60004109,60008004,60003893,60003619,60003892,60003918,
+      60003740,60003925,60003768,60003645,60003804,60003972,60003686,60003544,
+      60003613,60003737,60003744,60003994,60009026,60003757,60003838,60003574,
+      60003682,60003956,60004015,60004193,60008308,60004211,60004059,60003719,
+      60003908,60008190,60004085,60004105,60004102,60004032,60009104,60003590,
+      60004111,60004047,60004231,60003538,60003993,60003800,60009171,60003837,
+      60003561,60003854,60003921,60003964,60004044,60008020,60003614,60008191,
+      60004020,60004136,60004062,60004120,60003924,60004161,60003782,60004167,
+      60004050,60003575,60004221,60004017,60003905,60003818,60003805,60003864,
+      60004121,60008361,60003931,60004171,60003979,60004196,60004084,60008309,
+      60003795,60003567,60003934,60004074,60004237,60009137,60003980,60003572,
+      60003767,60003949,60003963,60004170,60004174,60004046,60003878,60003606,
+      60004228,60003775,60003546,60008891,60008398,60004163,60004247,60003843,
+      60003649,60003533,60003862,60004058,60003698,60004038,60004206,60003788,
+      60003616,60004049,60003568,60004249,60003563,60009168,60003702,60004075,
+      60003605,60004091,60004068,60003883,60004251,60003540,60004077,60004129,
+      60004189,60003780,60009022,60004042,60004183,60003628,60004151,60003882,
+      60004178,60003621,60008963,60003819,60004004,60004031,60004250,60003783,
+      60004205,60004159,60003695,60009132,60009249,60003570,60003601,60004154,
+      60004227,60008750,60003933,60004208,60003550,60009024,60004096,60004122,
+      60004240,60003919,60003679,60003526,60003756,60003603,60003935,60003736,
+      60003822,60004216,60004104,60004209,60003814,60003694,60009174,60008006,
+      60003666,60003861,60004213,60003789,60008307,60008567,60009020
+    ];
 
-        // ✅ Total de números disponibles (ahora es la longitud de tu lista de IDs)
-        const INITIAL_NUMBER_COUNT = Array.from(new Set(NON_CORRELATIVE_IDS)).length;
+    const UNIQUE_IDS = Array.from(new Set(NON_CORRELATIVE_IDS));
+    const INITIAL_NUMBER_COUNT = UNIQUE_IDS.length;
 
-        // --- ICONS ---
-        const GiftIcon = ({ className }) => (
-            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
-            </svg>
-        );
+    // --- ICONS ---
+    const GiftIcon = ({ className }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+      </svg>
+    );
 
-        const UsersIcon = ({ className }) => (
-            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-        );
+    const UsersIcon = ({ className }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+      </svg>
+    );
 
-        const RotateCwIcon = ({ className }) => (
-            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-        );
+    const RotateCwIcon = ({ className }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      </svg>
+    );
 
-        const TrophyIcon = ({ className }) => (
-            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-            </svg>
-        );
+    const TrophyIcon = ({ className }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+      </svg>
+    );
 
-        const TrashIcon = ({ className }) => (
-            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-        );
+    const TrashIcon = ({ className }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+      </svg>
+    );
 
-        const InfoIcon = ({ className }) => (
-            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-        );
+    const InfoIcon = ({ className }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    );
 
-        const XIcon = ({ className }) => (
-            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-        );
+    const XIcon = ({ className }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    );
 
-        // --- COMPONENTS ---
+    // --- COMPONENTS ---
+    const WinnerBanner = ({ winner, visible }) => {
+      if (!visible) return null;
+      return (
+        <div className="mb-6 bg-yellow-400 border-4 border-yellow-600 rounded-xl p-6 text-center animate-pulse shadow-xl transform transition-all duration-500 hover:scale-105">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2 uppercase tracking-wider">
+            🎉 ¡Ganador! 🎉
+          </h2>
+          <div className="space-y-2">
+            <p className="text-4xl md:text-5xl font-black text-blue-900">
+              #{winner.numero}
+            </p>
+            <p className="text-2xl md:text-3xl font-bold text-gray-800">
+              {winner.premio}
+            </p>
+          </div>
+        </div>
+      );
+    };
 
-        const WinnerBanner = ({ winner, visible }) => {
-            if (!visible) return null;
-            return (
-                <div className="mb-6 bg-yellow-400 border-4 border-yellow-600 rounded-xl p-6 text-center animate-pulse shadow-xl transform transition-all duration-500 hover:scale-105">
-                    <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2 uppercase tracking-wider">
-                        🎉 ¡Ganador! 🎉
-                    </h2>
-                    <div className="space-y-2">
-                        <p className="text-4xl md:text-5xl font-black text-blue-900">
-                            #{winner.numero}
-                        </p>
-                        <p className="text-2xl md:text-3xl font-bold text-gray-800">
-                            {winner.premio}
-                        </p>
-                    </div>
+    const RaffleCard = ({ title, icon, remainingCount, currentValue, isSpinning, themeColor }) => {
+      const isPink = themeColor === 'pink';
+      const borderColor = isPink ? 'border-pink-300' : 'border-blue-300';
+      const gradientStart = isPink ? 'from-pink-100' : 'from-blue-100';
+      const gradientEnd = isPink ? 'to-purple-100' : 'to-indigo-100';
+      const badgeColor = isPink ? 'bg-pink-500' : 'bg-blue-500';
+
+      return (
+        <div className="bg-white rounded-xl shadow-2xl p-6 flex flex-col h-full transform transition-all hover:shadow-3xl relative overflow-hidden">
+          <div className="flex items-center justify-between mb-4 relative z-10">
+            <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+              {icon}
+              {title}
+            </h2>
+            <span className={`${badgeColor} text-white px-3 py-1 rounded-full font-bold text-sm shadow-sm`}>
+              {remainingCount} restantes
+            </span>
+          </div>
+
+          <div className={`bg-gradient-to-br ${gradientStart} ${gradientEnd} rounded-lg p-4 mb-0 flex-grow flex items-center justify-center border-4 ${borderColor} min-h-[220px] shadow-inner relative z-10`}>
+            <p className={`font-bold text-center text-gray-800 break-words w-full ${typeof currentValue === 'number' ? 'text-7xl' : 'text-3xl'}`}>
+              {currentValue !== null ? currentValue : (typeof currentValue === 'number' ? '?' : '🎁')}
+            </p>
+            {isSpinning && (
+              <div className="absolute inset-0 bg-white/10 flex items-center justify-center">
+                <div className={`w-full h-1 ${badgeColor} animate-pulse absolute bottom-0`}></div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    };
+
+    const HistoryList = ({ winners }) => {
+      if (winners.length === 0) return null;
+      return (
+        <div className="bg-white rounded-xl shadow-2xl p-6 mt-8 animate-fade-in-up">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <TrophyIcon className="w-6 h-6 text-yellow-500" />
+            Ganadores ({winners.length})
+          </h2>
+          <div className="overflow-hidden rounded-lg border border-gray-200">
+            <div className="overflow-x-auto max-h-96">
+              <table className="w-full text-sm text-left text-gray-500">
+                <thead className="text-xs text-gray-700 uppercase bg-gray-100 sticky top-0 z-10 shadow-sm">
+                  <tr>
+                    <th className="px-6 py-3">#</th>
+                    <th className="px-6 py-3">Número/ID</th>
+                    <th className="px-6 py-3">Premio</th>
+                    <th className="px-6 py-3 text-right">Hora</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {winners.map((winner, idx) => (
+                    <tr key={winner.id} className="bg-white border-b hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 font-medium text-gray-900">{winners.length - idx}</td>
+                      <td className="px-6 py-4 font-bold text-blue-600 text-lg">#{winner.numero}</td>
+                      <td className="px-6 py-4 text-gray-900 font-medium">{winner.premio}</td>
+                      <td className="px-6 py-4 text-right text-gray-400 font-mono">
+                        {winner.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const InfoModal = ({ isOpen, onClose, prizesRemaining, idsRemaining }) => {
+      if (!isOpen) return null;
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={onClose} />
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 animate-fade-in-up transform transition-all">
+            <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+              <XIcon className="w-6 h-6" />
+            </button>
+            <div className="text-center mb-6">
+              <div className="inline-block p-3 bg-blue-100 rounded-full mb-3">
+                <TrophyIcon className="w-8 h-8 text-blue-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800">Cómo Funciona</h2>
+            </div>
+            <div className="space-y-4 text-gray-700">
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 space-y-2">
+                <p className="flex items-center gap-2">✅ <span className="font-semibold">{INITIAL_PRIZES.length} premios</span> para sortear</p>
+                <p className="flex items-center gap-2">✅ <span className="font-semibold">{INITIAL_NUMBER_COUNT} IDs</span> disponibles</p>
+                <p className="flex items-center gap-2">✅ Se sortearán <span className="font-semibold">{INITIAL_PRIZES.length} ganadores</span></p>
+                <p className="flex items-center gap-2">⚠️ Quedarán <span className="font-semibold">{INITIAL_NUMBER_COUNT - INITIAL_PRIZES.length} IDs</span> sin premio</p>
+                <div className="pt-2 border-t">
+                  <p className="text-sm text-gray-600">Ahora mismo: <strong>{prizesRemaining}</strong> premios restantes, <strong>{idsRemaining}</strong> IDs restantes.</p>
                 </div>
-            );
-        };
+              </div>
+              <div className="space-y-2 text-sm">
+                <p>🔴 <strong>Los IDs nunca se repiten:</strong> se eliminan tras salir.</p>
+                <p>🎁 <strong>Los premios se eliminan</strong> de la lista tras ser ganados.</p>
+              </div>
+              <div className="border-t pt-4 mt-4">
+                <h3 className="font-bold text-gray-900 mb-2">Instrucciones:</h3>
+                <ol className="list-decimal list-inside space-y-1 text-gray-600 ml-1">
+                  <li>Pulsa el botón grande <strong>¡SORTEAR!</strong></li>
+                  <li>La tómbola seleccionará primero un <strong>premio</strong> al azar.</li>
+                  <li>Automáticamente buscará el <strong>ID ganador</strong>.</li>
+                  <li>¡El resultado aparecerá en pantalla!</li>
+                </ol>
+              </div>
+            </div>
+            <div className="mt-6">
+              <button onClick={onClose} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition-colors">
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    };
 
-        const RaffleCard = ({ title, icon, remainingCount, currentValue, isSpinning, themeColor }) => {
-            const isPink = themeColor === 'pink';
-            const borderColor = isPink ? 'border-pink-300' : 'border-blue-300';
-            const gradientStart = isPink ? 'from-pink-100' : 'from-blue-100';
-            const gradientEnd = isPink ? 'to-purple-100' : 'to-indigo-100';
-            const badgeColor = isPink ? 'bg-pink-500' : 'bg-blue-500';
+    // --- MAIN APP COMPONENT ---
+    const App = () => {
+      const [prizes, setPrizes] = useState(INITIAL_PRIZES);
+      const [numbers, setNumbers] = useState(() => UNIQUE_IDS);
 
-            return (
-                <div className="bg-white rounded-xl shadow-2xl p-6 flex flex-col h-full transform transition-all hover:shadow-3xl relative overflow-hidden">
-                    <div className="flex items-center justify-between mb-4 relative z-10">
-                        <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                            {icon}
-                            {title}
-                        </h2>
-                        <span className={`${badgeColor} text-white px-3 py-1 rounded-full font-bold text-sm shadow-sm`}>
-                            {remainingCount} restantes
-                        </span>
-                    </div>
+      const [currentPrize, setCurrentPrize] = useState(null);
+      const [currentNumber, setCurrentNumber] = useState(null);
 
-                    <div className={`bg-gradient-to-br ${gradientStart} ${gradientEnd} rounded-lg p-4 mb-0 flex-grow flex items-center justify-center border-4 ${borderColor} min-h-[220px] shadow-inner relative z-10`}>
-                        <p className={`font-bold text-center text-gray-800 break-words w-full ${typeof currentValue === 'number' ? 'text-7xl' : 'text-3xl'}`}>
-                            {currentValue !== null ? currentValue : (typeof currentValue === 'number' ? '?' : '🎁')}
-                        </p>
-                        {isSpinning && (
-                            <div className="absolute inset-0 bg-white/10 flex items-center justify-center">
-                                <div className={`w-full h-1 ${badgeColor} animate-pulse absolute bottom-0`}></div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            );
-        };
+      const [isSpinningPrize, setIsSpinningPrize] = useState(false);
+      const [isSpinningNumber, setIsSpinningNumber] = useState(false);
 
-        const HistoryList = ({ winners }) => {
-            if (winners.length === 0) return null;
-            return (
-                <div className="bg-white rounded-xl shadow-2xl p-6 mt-8 animate-fade-in-up">
-                    <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <TrophyIcon className="w-6 h-6 text-yellow-500" />
-                        Ganadores ({winners.length})
-                    </h2>
-                    <div className="overflow-hidden rounded-lg border border-gray-200">
-                        <div className="overflow-x-auto max-h-96">
-                            <table className="w-full text-sm text-left text-gray-500">
-                                <thead className="text-xs text-gray-700 uppercase bg-gray-100 sticky top-0 z-10 shadow-sm">
-                                    <tr>
-                                        <th className="px-6 py-3">#</th>
-                                        <th className="px-6 py-3">Número</th>
-                                        <th className="px-6 py-3">Premio</th>
-                                        <th className="px-6 py-3 text-right">Hora</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {winners.map((winner, idx) => (
-                                        <tr key={winner.id} className="bg-white border-b hover:bg-gray-50 transition-colors">
-                                            <td className="px-6 py-4 font-medium text-gray-900">{winners.length - idx}</td>
-                                            <td className="px-6 py-4 font-bold text-blue-600 text-lg">#{winner.numero}</td>
-                                            <td className="px-6 py-4 text-gray-900 font-medium">{winner.premio}</td>
-                                            <td className="px-6 py-4 text-right text-gray-400 font-mono">
-                                                {winner.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
+      const [winners, setWinners] = useState([]);
+      const [showWinner, setShowWinner] = useState(false);
+      const [showInfo, setShowInfo] = useState(false);
 
-        const InfoModal = ({ isOpen, onClose }) => {
-            if (!isOpen) return null;
-            return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={onClose} />
-                    <div className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 animate-fade-in-up transform transition-all">
-                        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
-                            <XIcon className="w-6 h-6" />
-                        </button>
-                        <div className="text-center mb-6">
-                            <div className="inline-block p-3 bg-blue-100 rounded-full mb-3">
-                                <TrophyIcon className="w-8 h-8 text-blue-600" />
-                            </div>
-                            <h2 className="text-2xl font-bold text-gray-800">Cómo Funciona</h2>
-                        </div>
-                        <div className="space-y-4 text-gray-700">
-                            <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 space-y-2">
-                                <p className="flex items-center gap-2">✅ <span className="font-semibold">{INITIAL_PRIZES.length} premios</span> para sortear</p>
-                                <p className="flex items-center gap-2">✅ <span className="font-semibold">{INITIAL_NUMBER_COUNT} números/IDs</span> disponibles</p>
-                                <p className="flex items-center gap-2">✅ Se sortearán <span className="font-semibold">{INITIAL_PRIZES.length} ganadores</span></p>
-                                <p className="flex items-center gap-2">⚠️ Quedarán <span className="font-semibold">{INITIAL_NUMBER_COUNT - INITIAL_PRIZES.length} números/IDs</span> sin premio</p>
-                            </div>
-                            <div className="space-y-2 text-sm">
-                                <p>🔴 <strong>Los números nunca se repiten:</strong> se eliminan tras salir.</p>
-                                <p>🎁 <strong>Los premios se eliminan</strong> de la lista tras ser ganados.</p>
-                            </div>
-                            <div className="border-t pt-4 mt-4">
-                                <h3 className="font-bold text-gray-900 mb-2">Instrucciones:</h3>
-                                <ol className="list-decimal list-inside space-y-1 text-gray-600 ml-1">
-                                    <li>Pulsa el botón grande <strong>¡SORTEAR!</strong></li>
-                                    <li>La tómbola seleccionará primero un <strong>premio</strong> al azar.</li>
-                                    <li>Automáticamente buscará el <strong>número ganador</strong>.</li>
-                                    <li>¡El resultado aparecerá en pantalla!</li>
-                                </ol>
-                            </div>
-                        </div>
-                        <div className="mt-6">
-                            <button onClick={onClose} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition-colors">
-                                Entendido
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
+      const handleAutoSpin = useCallback(() => {
+        if (prizes.length === 0 || numbers.length === 0 || isSpinningPrize || isSpinningNumber) return;
 
-        // --- MAIN APP COMPONENT ---
+        setShowWinner(false);
+        setCurrentPrize(null);
+        setCurrentNumber(null);
 
-        const App = () => {
-            const [prizes, setPrizes] = useState(INITIAL_PRIZES);
+        setIsSpinningPrize(true);
+        let prizeCounter = 0;
+        const prizeInterval = setInterval(() => {
+          setCurrentPrize(prizes[Math.floor(Math.random() * prizes.length)]);
+          prizeCounter++;
+          if (prizeCounter > 20) {
+            clearInterval(prizeInterval);
 
-            // ✅ ANTES: números correlativos
-            // const [numbers, setNumbers] = useState(() => Array.from({ length: INITIAL_NUMBER_COUNT }, (_, i) => i + INITIAL_NUMBER_START));
+            const finalPrize = prizes[Math.floor(Math.random() * prizes.length)];
+            setCurrentPrize(finalPrize);
+            setIsSpinningPrize(false);
 
-            // ✅ AHORA: IDs reales (sin repetidos por si acaso)
-            const [numbers, setNumbers] = useState(() => Array.from(new Set(NON_CORRELATIVE_IDS)));
+            setTimeout(() => {
+              setIsSpinningNumber(true);
+              let numberCounter = 0;
+              const numberInterval = setInterval(() => {
+                setCurrentNumber(numbers[Math.floor(Math.random() * numbers.length)]);
+                numberCounter++;
+                if (numberCounter > 30) {
+                  clearInterval(numberInterval);
 
-            const [currentPrize, setCurrentPrize] = useState(null);
-            const [currentNumber, setCurrentNumber] = useState(null);
+                  const finalNumber = numbers[Math.floor(Math.random() * numbers.length)];
+                  setCurrentNumber(finalNumber);
+                  setIsSpinningNumber(false);
 
-            const [isSpinningPrize, setIsSpinningPrize] = useState(false);
-            const [isSpinningNumber, setIsSpinningNumber] = useState(false);
+                  const newWinner = { id: Date.now(), premio: finalPrize, numero: finalNumber, timestamp: new Date() };
+                  setWinners(prev => [newWinner, ...prev]);
 
-            const [winners, setWinners] = useState([]);
-            const [showWinner, setShowWinner] = useState(false);
-            const [showInfo, setShowInfo] = useState(false);
-
-            const handleAutoSpin = useCallback(() => {
-                if (prizes.length === 0 || numbers.length === 0 || isSpinningPrize || isSpinningNumber) return;
-
-                setShowWinner(false);
-                setCurrentPrize(null);
-                setCurrentNumber(null);
-
-                // Start Prize Spin
-                setIsSpinningPrize(true);
-                let prizeCounter = 0;
-                const prizeInterval = setInterval(() => {
-                    setCurrentPrize(prizes[Math.floor(Math.random() * prizes.length)]);
-                    prizeCounter++;
-                    if (prizeCounter > 20) {
-                        clearInterval(prizeInterval);
-
-                        // Select Final Prize
-                        const finalPrize = prizes[Math.floor(Math.random() * prizes.length)];
-                        setCurrentPrize(finalPrize);
-                        setIsSpinningPrize(false);
-
-                        // Start Number Spin after delay
-                        setTimeout(() => {
-                            setIsSpinningNumber(true);
-                            let numberCounter = 0;
-                            const numberInterval = setInterval(() => {
-                                setCurrentNumber(numbers[Math.floor(Math.random() * numbers.length)]);
-                                numberCounter++;
-                                if (numberCounter > 30) {
-                                    clearInterval(numberInterval);
-
-                                    // Select Final Number (ID)
-                                    const finalNumber = numbers[Math.floor(Math.random() * numbers.length)];
-                                    setCurrentNumber(finalNumber);
-                                    setIsSpinningNumber(false);
-
-                                    // Register Winner
-                                    const newWinner = { id: Date.now(), premio: finalPrize, numero: finalNumber, timestamp: new Date() };
-                                    setWinners(prev => [newWinner, ...prev]);
-
-                                    // Update State (Remove used items)
-                                    setPrizes(prev => {
-                                        const index = prev.indexOf(finalPrize);
-                                        if (index > -1) {
-                                            const newPrizes = [...prev];
-                                            newPrizes.splice(index, 1);
-                                            return newPrizes;
-                                        }
-                                        return prev;
-                                    });
-                                    setNumbers(prev => prev.filter(n => n !== finalNumber));
-                                    setShowWinner(true);
-                                }
-                            }, 60);
-                        }, 500);
+                  setPrizes(prev => {
+                    const index = prev.indexOf(finalPrize);
+                    if (index > -1) {
+                      const newPrizes = [...prev];
+                      newPrizes.splice(index, 1);
+                      return newPrizes;
                     }
-                }, 80);
-            }, [prizes, numbers, isSpinningPrize, isSpinningNumber]);
+                    return prev;
+                  });
 
-            const handleReset = () => {
-                if (confirm('¿Estás seguro de reiniciar la tómbola? Se perderán todos los ganadores y el historial.')) {
-                    setPrizes(INITIAL_PRIZES);
-                    setNumbers(Array.from(new Set(NON_CORRELATIVE_IDS)));
-                    setCurrentPrize(null);
-                    setCurrentNumber(null);
-                    setWinners([]);
-                    setShowWinner(false);
+                  setNumbers(prev => prev.filter(n => n !== finalNumber));
+                  setShowWinner(true);
                 }
-            };
+              }, 60);
+            }, 500);
+          }
+        }, 80);
+      }, [prizes, numbers, isSpinningPrize, isSpinningNumber]);
 
-            const isGameActive = isSpinningPrize || isSpinningNumber;
-            const isGameOver = prizes.length === 0;
+      // ✅ Exportar Excel (.xlsx) con 2 hojas
+      const handleDownloadExcel = useCallback(() => {
+        const now = new Date();
+        const pad2 = (n) => String(n).padStart(2, '0');
+        const stamp = `${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())}_${pad2(now.getHours())}${pad2(now.getMinutes())}`;
 
-            return (
-                <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-500 to-red-500 p-4 md:p-8 font-sans selection:bg-yellow-300 selection:text-black">
-                    <div className="max-w-7xl mx-auto relative">
-                        <InfoModal isOpen={showInfo} onClose={() => setShowInfo(false)} />
+        // Hoja 1: Ganadores (orden cronológico: primero arriba)
+        const winnersChrono = winners.slice().reverse();
+        const winnersRows = winnersChrono.map((w, idx) => ({
+          '#': idx + 1,
+          'Número/ID': w.numero,
+          'Premio': w.premio,
+          'Fecha': w.timestamp.toLocaleDateString(),
+          'Hora': w.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }));
 
-                        <header className="relative text-center mb-8 pt-4">
-                            <div className="flex items-center justify-center gap-4 mb-2">
-                                <TrophyIcon className="w-10 h-10 md:w-16 md:h-16 text-yellow-300 animate-bounce" />
-                                <h1 className="text-4xl md:text-6xl font-black text-white drop-shadow-lg tracking-tight">TÓMBOLA 2025</h1>
-                                <TrophyIcon className="w-10 h-10 md:w-16 md:h-16 text-yellow-300 animate-bounce" />
-                            </div>
-                            <p className="text-white text-lg md:text-xl font-medium opacity-90 tracking-wide uppercase">¡Sorteo de premios en vivo!</p>
-                            <button onClick={() => setShowInfo(true)} className="absolute top-0 right-0 p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-white/50" title="Información">
-                                <InfoIcon className="w-8 h-8" />
-                            </button>
-                        </header>
+        // Hoja 2: Restantes
+        const remainingPrizesRows = prizes.map((p, idx) => ({ '#': idx + 1, 'Premio restante': p }));
+        const remainingIdsRows = numbers.map((id, idx) => ({ '#': idx + 1, 'ID restante': id }));
 
-                        {winners.length > 0 && <WinnerBanner visible={showWinner} winner={winners[0]} />}
+        const wb = XLSX.utils.book_new();
 
-                        <div className="grid md:grid-cols-2 gap-8 mb-10">
-                            <RaffleCard title="Premios" icon={<GiftIcon className="w-6 h-6 text-pink-500" />} remainingCount={prizes.length} currentValue={currentPrize} isSpinning={isSpinningPrize} themeColor="pink" />
-                            <RaffleCard title="Números" icon={<UsersIcon className="w-6 h-6 text-blue-500" />} remainingCount={numbers.length} currentValue={currentNumber} isSpinning={isSpinningNumber} themeColor="blue" />
-                        </div>
+        const wsGanadores = XLSX.utils.json_to_sheet(winnersRows.length ? winnersRows : [{ Info: 'Aún no hay ganadores' }]);
+        XLSX.utils.book_append_sheet(wb, wsGanadores, 'Ganadores');
 
-                        <div className="flex flex-col items-center justify-center mb-12 gap-6">
-                            <button
-                                onClick={handleAutoSpin}
-                                disabled={isGameActive || isGameOver}
-                                className={`group relative overflow-hidden rounded-full py-6 px-20 bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-black text-3xl md:text-5xl shadow-[0_0_40px_rgba(251,191,36,0.6)] transform transition-all duration-300 border-4 border-yellow-200 ${isGameActive || isGameOver ? 'opacity-60 grayscale cursor-not-allowed scale-95' : 'hover:scale-105 hover:shadow-[0_0_60px_rgba(251,191,36,0.8)] hover:-translate-y-1 active:scale-95 active:translate-y-1'}`}
-                            >
-                                <div className="absolute inset-0 bg-white/30 group-hover:translate-x-full transition-transform duration-700 ease-in-out skew-x-12 origin-left"></div>
-                                <div className="flex items-center gap-4 relative z-10 uppercase tracking-widest drop-shadow-md">
-                                    <RotateCwIcon className={`w-8 h-8 md:w-12 md:h-12 ${isGameActive ? 'animate-spin' : ''}`} />
-                                    <span>
-                                        {isGameActive ? 'Sorteando...' :
-                                         (isGameOver ? 'Fin del Sorteo' :
-                                         (showWinner ? 'Siguiente' : '¡SORTEAR!'))}
-                                    </span>
-                                </div>
-                            </button>
-                            <button onClick={handleReset} className="text-white/60 hover:text-white hover:bg-white/10 px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2">
-                                <TrashIcon className="w-4 h-4" /> Reiniciar Tómbola
-                            </button>
-                        </div>
+        // “Restantes” en una misma hoja, una tabla debajo de otra
+        const wsRestantes = XLSX.utils.aoa_to_sheet([
+          ['Resumen'],
+          ['Premios restantes', prizes.length],
+          ['IDs restantes', numbers.length],
+          [],
+          ['Premios restantes'],
+          ['#', 'Premio restante'],
+        ]);
 
-                        <HistoryList winners={winners} />
+        if (remainingPrizesRows.length) {
+          XLSX.utils.sheet_add_json(wsRestantes, remainingPrizesRows, { origin: 'A6', skipHeader: true });
+        } else {
+          XLSX.utils.sheet_add_aoa(wsRestantes, [['(Sin premios restantes)']], { origin: 'B6' });
+        }
 
-                        <footer className="text-center text-white/50 text-sm mt-12 pb-4">
-                            <p>&copy; {new Date().getFullYear()} Evento Tómbola</p>
-                        </footer>
-                    </div>
+        // Calcular dónde empieza la tabla de IDs
+        const startRowIds = 6 + Math.max(remainingPrizesRows.length, 1) + 2; // +2 espacio
+        XLSX.utils.sheet_add_aoa(wsRestantes, [
+          [],
+          ['IDs restantes'],
+          ['#', 'ID restante']
+        ], { origin: `A${startRowIds}` });
+
+        if (remainingIdsRows.length) {
+          XLSX.utils.sheet_add_json(wsRestantes, remainingIdsRows, { origin: `A${startRowIds+2}`, skipHeader: true });
+        } else {
+          XLSX.utils.sheet_add_aoa(wsRestantes, [['(Sin IDs restantes)']], { origin: `B${startRowIds+2}` });
+        }
+
+        XLSX.utils.book_append_sheet(wb, wsRestantes, 'Restantes');
+
+        XLSX.writeFile(wb, `tombola_2025_${stamp}.xlsx`);
+      }, [winners, prizes, numbers]);
+
+      const handleReset = () => {
+        if (confirm('¿Estás seguro de reiniciar la tómbola? Se perderán todos los ganadores y el historial.')) {
+          setPrizes(INITIAL_PRIZES);
+          setNumbers(UNIQUE_IDS);
+          setCurrentPrize(null);
+          setCurrentNumber(null);
+          setWinners([]);
+          setShowWinner(false);
+        }
+      };
+
+      const isGameActive = isSpinningPrize || isSpinningNumber;
+      const isGameOver = prizes.length === 0;
+
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-500 to-red-500 p-4 md:p-8 font-sans selection:bg-yellow-300 selection:text-black">
+          <div className="max-w-7xl mx-auto relative">
+            <InfoModal
+              isOpen={showInfo}
+              onClose={() => setShowInfo(false)}
+              prizesRemaining={prizes.length}
+              idsRemaining={numbers.length}
+            />
+
+            <header className="relative text-center mb-8 pt-4">
+              <div className="flex items-center justify-center gap-4 mb-2">
+                <TrophyIcon className="w-10 h-10 md:w-16 md:h-16 text-yellow-300 animate-bounce" />
+                <h1 className="text-4xl md:text-6xl font-black text-white drop-shadow-lg tracking-tight">TÓMBOLA 2025</h1>
+                <TrophyIcon className="w-10 h-10 md:w-16 md:h-16 text-yellow-300 animate-bounce" />
+              </div>
+              <p className="text-white text-lg md:text-xl font-medium opacity-90 tracking-wide uppercase">¡Sorteo de premios en vivo!</p>
+              <button onClick={() => setShowInfo(true)} className="absolute top-0 right-0 p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-white/50" title="Información">
+                <InfoIcon className="w-8 h-8" />
+              </button>
+            </header>
+
+            {winners.length > 0 && <WinnerBanner visible={showWinner} winner={winners[0]} />}
+
+            <div className="grid md:grid-cols-2 gap-8 mb-10">
+              <RaffleCard
+                title="Premios"
+                icon={<GiftIcon className="w-6 h-6 text-pink-500" />}
+                remainingCount={prizes.length}
+                currentValue={currentPrize}
+                isSpinning={isSpinningPrize}
+                themeColor="pink"
+              />
+              <RaffleCard
+                title="Números/IDs"
+                icon={<UsersIcon className="w-6 h-6 text-blue-500" />}
+                remainingCount={numbers.length}
+                currentValue={currentNumber}
+                isSpinning={isSpinningNumber}
+                themeColor="blue"
+              />
+            </div>
+
+            <div className="flex flex-col items-center justify-center mb-12 gap-6">
+              <button
+                onClick={handleAutoSpin}
+                disabled={isGameActive || isGameOver}
+                className={`group relative overflow-hidden rounded-full py-6 px-20 bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-black text-3xl md:text-5xl shadow-[0_0_40px_rgba(251,191,36,0.6)] transform transition-all duration-300 border-4 border-yellow-200 ${
+                  isGameActive || isGameOver
+                    ? 'opacity-60 grayscale cursor-not-allowed scale-95'
+                    : 'hover:scale-105 hover:shadow-[0_0_60px_rgba(251,191,36,0.8)] hover:-translate-y-1 active:scale-95 active:translate-y-1'
+                }`}
+              >
+                <div className="absolute inset-0 bg-white/30 group-hover:translate-x-full transition-transform duration-700 ease-in-out skew-x-12 origin-left"></div>
+                <div className="flex items-center gap-4 relative z-10 uppercase tracking-widest drop-shadow-md">
+                  <RotateCwIcon className={`w-8 h-8 md:w-12 md:h-12 ${isGameActive ? 'animate-spin' : ''}`} />
+                  <span>
+                    {isGameActive
+                      ? 'Sorteando...'
+                      : isGameOver
+                      ? 'Fin del Sorteo'
+                      : showWinner
+                      ? 'Siguiente'
+                      : '¡SORTEAR!'}
+                  </span>
                 </div>
-            );
-        };
+              </button>
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+              <div className="flex flex-col md:flex-row gap-3">
+                <button
+                  onClick={handleDownloadExcel}
+                  className="text-white/90 hover:text-white bg-white/10 hover:bg-white/15 px-4 py-2 rounded-lg text-sm font-bold transition-all"
+                  title="Descargar registro en Excel"
+                >
+                  📊 Descargar Excel
+                </button>
+
+                <button
+                  onClick={handleReset}
+                  className="text-white/60 hover:text-white hover:bg-white/10 px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 justify-center"
+                >
+                  <TrashIcon className="w-4 h-4" /> Reiniciar Tómbola
+                </button>
+              </div>
+            </div>
+
+            <HistoryList winners={winners} />
+
+            <footer className="text-center text-white/50 text-sm mt-12 pb-4">
+              <p>&copy; {new Date().getFullYear()} Evento Tómbola</p>
+            </footer>
+          </div>
+        </div>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
 </body>
 </html>
