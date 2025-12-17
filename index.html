@@ -4,29 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tómbola 2025</title>
-    
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
-    
+
     <!-- React & ReactDOM (UMD for simple browser usage) -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    
+
     <!-- Babel for in-browser transpilation -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <style>
       body { font-family: 'Inter', sans-serif; }
-      
+
       @keyframes fade-in-up {
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
       }
-      .animate-fade-in-up { 
-        animation: fade-in-up 0.5s ease-out forwards; 
+      .animate-fade-in-up {
+        animation: fade-in-up 0.5s ease-out forwards;
       }
     </style>
 <script type="importmap">
@@ -43,7 +43,7 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useCallback, useEffect } = React;
+        const { useState, useCallback } = React;
 
         // --- CONSTANTS ---
         const PRIZE_CONFIG = [
@@ -51,7 +51,7 @@
             { name: 'Maleta de Viaje', count: 1 },
             { name: 'Maletín Grande de Herramientas', count: 8 },
             { name: 'Maletín Pequeño de Herramientas', count: 1 },
-            { name: 'Mochila', count: 9 }, 
+            { name: 'Mochila', count: 9 },
             { name: ' Amazfit GTR 3 Pro', count: 1 },
             { name: 'Amazon Echo Dot', count: 2 },
             { name: 'Xiamoni Poco x7 Pro', count: 2 },
@@ -61,14 +61,52 @@
             { name: 'Entradas de patinaje', count: 9 },
             { name: 'Maletin taladradora', count: 4 },
             { name: 'Maletin Mediano', count: 2 }
-
-           
         ];
 
-        // Generate the flat list of 28 prizes based on counts
+        // Generate the flat list of prizes based on counts
         const INITIAL_PRIZES = PRIZE_CONFIG.flatMap(item => Array(item.count).fill(item.name));
-        const INITIAL_NUMBER_START = 901;
-        const INITIAL_NUMBER_COUNT = 97;
+
+        // ✅ NUEVO: IDs NO correlativos (pool completo)
+        const NON_CORRELATIVE_IDS = [
+          60003764,60004204,60003534,60003609,60003683,60003911,60003974,60004112,
+          60008007,60004115,60003541,60003637,60003920,60004241,60004220,60003712,
+          60003655,60003857,60004072,60004055,60003946,60003531,60004066,60004245,
+          60008797,60003680,60003684,60003809,60003915,60004243,60008018,60003647,
+          60003722,60009135,60003801,60003648,60003629,60009170,60003635,60003834,
+          60003880,60003926,60003945,60004005,60004239,60003970,60004039,60003999,
+          60008374,60003564,60003660,60003639,60004003,60003573,60004083,60008393,
+          60003697,60003703,60003734,60003755,60008801,60003559,60003750,60003853,
+          60003954,60004088,60004118,60004137,60004139,60004190,60003597,60003667,
+          60003674,60003825,60008019,60004067,60003914,60004113,60003859,60004027,
+          60003990,60003716,60004019,60008021,60004219,60003808,60003681,60003894,
+          60004175,60003828,60009169,60003707,60003733,60003685,60003900,60003754,
+          60004021,60003539,60004109,60008004,60003893,60003619,60003892,60003918,
+          60003740,60003925,60003768,60003645,60003804,60003972,60003686,60003544,
+          60003613,60003737,60003744,60003994,60009026,60003757,60003838,60003574,
+          60003682,60003956,60004015,60004193,60008308,60004211,60004059,60003719,
+          60003908,60008190,60004085,60004105,60004102,60004032,60009104,60003590,
+          60004111,60004047,60004231,60003538,60003993,60003800,60009171,60003837,
+          60003561,60003854,60003921,60003964,60004044,60008020,60003614,60008191,
+          60004020,60004136,60004062,60004120,60003924,60004161,60003782,60004167,
+          60004050,60003575,60004221,60004017,60003905,60003818,60003805,60003864,
+          60004121,60008361,60003931,60004171,60003979,60004196,60004084,60008309,
+          60003795,60003567,60003934,60004074,60004237,60009137,60003980,60003572,
+          60003767,60003949,60003963,60004170,60004174,60004046,60003878,60003606,
+          60004228,60003775,60003546,60008891,60008398,60004163,60004247,60003843,
+          60003649,60003533,60003862,60004058,60003698,60004038,60004206,60003788,
+          60003616,60004049,60003568,60004249,60003563,60009168,60003702,60004075,
+          60003605,60004091,60004068,60003883,60004251,60003540,60004077,60004129,
+          60004189,60003780,60009022,60004042,60004183,60003628,60004151,60003882,
+          60004178,60003621,60008963,60003819,60004004,60004031,60004250,60003783,
+          60004205,60004159,60003695,60009132,60009249,60003570,60003601,60004154,
+          60004227,60008750,60003933,60004208,60003550,60009024,60004096,60004122,
+          60004240,60003919,60003679,60003526,60003756,60003603,60003935,60003736,
+          60003822,60004216,60004104,60004209,60003814,60003694,60009174,60008006,
+          60003666,60003861,60004213,60003789,60008307,60008567,60009020
+        ];
+
+        // ✅ Total de números disponibles (ahora es la longitud de tu lista de IDs)
+        const INITIAL_NUMBER_COUNT = Array.from(new Set(NON_CORRELATIVE_IDS)).length;
 
         // --- ICONS ---
         const GiftIcon = ({ className }) => (
@@ -134,7 +172,7 @@
             );
         };
 
-        const RaffleCard = ({ title, icon, remainingCount, currentValue, isSpinning, disabled, themeColor, spinButtonText }) => {
+        const RaffleCard = ({ title, icon, remainingCount, currentValue, isSpinning, themeColor }) => {
             const isPink = themeColor === 'pink';
             const borderColor = isPink ? 'border-pink-300' : 'border-blue-300';
             const gradientStart = isPink ? 'from-pink-100' : 'from-blue-100';
@@ -223,9 +261,9 @@
                         <div className="space-y-4 text-gray-700">
                             <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 space-y-2">
                                 <p className="flex items-center gap-2">✅ <span className="font-semibold">{INITIAL_PRIZES.length} premios</span> para sortear</p>
-                                <p className="flex items-center gap-2">✅ <span className="font-semibold">{INITIAL_NUMBER_COUNT} números</span> disponibles ({INITIAL_NUMBER_START} - {INITIAL_NUMBER_START + INITIAL_NUMBER_COUNT - 1})</p>
+                                <p className="flex items-center gap-2">✅ <span className="font-semibold">{INITIAL_NUMBER_COUNT} números/IDs</span> disponibles</p>
                                 <p className="flex items-center gap-2">✅ Se sortearán <span className="font-semibold">{INITIAL_PRIZES.length} ganadores</span></p>
-                                <p className="flex items-center gap-2">⚠️ Quedarán <span className="font-semibold">{INITIAL_NUMBER_COUNT - INITIAL_PRIZES.length} números</span> sin premio</p>
+                                <p className="flex items-center gap-2">⚠️ Quedarán <span className="font-semibold">{INITIAL_NUMBER_COUNT - INITIAL_PRIZES.length} números/IDs</span> sin premio</p>
                             </div>
                             <div className="space-y-2 text-sm">
                                 <p>🔴 <strong>Los números nunca se repiten:</strong> se eliminan tras salir.</p>
@@ -255,20 +293,24 @@
 
         const App = () => {
             const [prizes, setPrizes] = useState(INITIAL_PRIZES);
-            const [numbers, setNumbers] = useState(() => Array.from({ length: INITIAL_NUMBER_COUNT }, (_, i) => i + INITIAL_NUMBER_START));
-            
+
+            // ✅ ANTES: números correlativos
+            // const [numbers, setNumbers] = useState(() => Array.from({ length: INITIAL_NUMBER_COUNT }, (_, i) => i + INITIAL_NUMBER_START));
+
+            // ✅ AHORA: IDs reales (sin repetidos por si acaso)
+            const [numbers, setNumbers] = useState(() => Array.from(new Set(NON_CORRELATIVE_IDS)));
+
             const [currentPrize, setCurrentPrize] = useState(null);
             const [currentNumber, setCurrentNumber] = useState(null);
-            
+
             const [isSpinningPrize, setIsSpinningPrize] = useState(false);
             const [isSpinningNumber, setIsSpinningNumber] = useState(false);
-            
+
             const [winners, setWinners] = useState([]);
             const [showWinner, setShowWinner] = useState(false);
             const [showInfo, setShowInfo] = useState(false);
 
             const handleAutoSpin = useCallback(() => {
-                // Modified: We allow spinning even if showWinner is true (it will reset it)
                 if (prizes.length === 0 || numbers.length === 0 || isSpinningPrize || isSpinningNumber) return;
 
                 setShowWinner(false);
@@ -283,7 +325,7 @@
                     prizeCounter++;
                     if (prizeCounter > 20) {
                         clearInterval(prizeInterval);
-                        
+
                         // Select Final Prize
                         const finalPrize = prizes[Math.floor(Math.random() * prizes.length)];
                         setCurrentPrize(finalPrize);
@@ -299,7 +341,7 @@
                                 if (numberCounter > 30) {
                                     clearInterval(numberInterval);
 
-                                    // Select Final Number
+                                    // Select Final Number (ID)
                                     const finalNumber = numbers[Math.floor(Math.random() * numbers.length)];
                                     setCurrentNumber(finalNumber);
                                     setIsSpinningNumber(false);
@@ -330,7 +372,7 @@
             const handleReset = () => {
                 if (confirm('¿Estás seguro de reiniciar la tómbola? Se perderán todos los ganadores y el historial.')) {
                     setPrizes(INITIAL_PRIZES);
-                    setNumbers(Array.from({ length: INITIAL_NUMBER_COUNT }, (_, i) => i + INITIAL_NUMBER_START));
+                    setNumbers(Array.from(new Set(NON_CORRELATIVE_IDS)));
                     setCurrentPrize(null);
                     setCurrentNumber(null);
                     setWinners([]);
@@ -345,7 +387,7 @@
                 <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-500 to-red-500 p-4 md:p-8 font-sans selection:bg-yellow-300 selection:text-black">
                     <div className="max-w-7xl mx-auto relative">
                         <InfoModal isOpen={showInfo} onClose={() => setShowInfo(false)} />
-                        
+
                         <header className="relative text-center mb-8 pt-4">
                             <div className="flex items-center justify-center gap-4 mb-2">
                                 <TrophyIcon className="w-10 h-10 md:w-16 md:h-16 text-yellow-300 animate-bounce" />
@@ -361,22 +403,22 @@
                         {winners.length > 0 && <WinnerBanner visible={showWinner} winner={winners[0]} />}
 
                         <div className="grid md:grid-cols-2 gap-8 mb-10">
-                            <RaffleCard title="Premios" icon={<GiftIcon className="w-6 h-6 text-pink-500" />} remainingCount={prizes.length} currentValue={currentPrize} isSpinning={isSpinningPrize} disabled={true} themeColor="pink" />
-                            <RaffleCard title="Números" icon={<UsersIcon className="w-6 h-6 text-blue-500" />} remainingCount={numbers.length} currentValue={currentNumber} isSpinning={isSpinningNumber} disabled={true} themeColor="blue" />
+                            <RaffleCard title="Premios" icon={<GiftIcon className="w-6 h-6 text-pink-500" />} remainingCount={prizes.length} currentValue={currentPrize} isSpinning={isSpinningPrize} themeColor="pink" />
+                            <RaffleCard title="Números" icon={<UsersIcon className="w-6 h-6 text-blue-500" />} remainingCount={numbers.length} currentValue={currentNumber} isSpinning={isSpinningNumber} themeColor="blue" />
                         </div>
 
                         <div className="flex flex-col items-center justify-center mb-12 gap-6">
-                            <button 
-                                onClick={handleAutoSpin} 
-                                disabled={isGameActive || isGameOver} 
+                            <button
+                                onClick={handleAutoSpin}
+                                disabled={isGameActive || isGameOver}
                                 className={`group relative overflow-hidden rounded-full py-6 px-20 bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-black text-3xl md:text-5xl shadow-[0_0_40px_rgba(251,191,36,0.6)] transform transition-all duration-300 border-4 border-yellow-200 ${isGameActive || isGameOver ? 'opacity-60 grayscale cursor-not-allowed scale-95' : 'hover:scale-105 hover:shadow-[0_0_60px_rgba(251,191,36,0.8)] hover:-translate-y-1 active:scale-95 active:translate-y-1'}`}
                             >
                                 <div className="absolute inset-0 bg-white/30 group-hover:translate-x-full transition-transform duration-700 ease-in-out skew-x-12 origin-left"></div>
                                 <div className="flex items-center gap-4 relative z-10 uppercase tracking-widest drop-shadow-md">
                                     <RotateCwIcon className={`w-8 h-8 md:w-12 md:h-12 ${isGameActive ? 'animate-spin' : ''}`} />
                                     <span>
-                                        {isGameActive ? 'Sorteando...' : 
-                                         (isGameOver ? 'Fin del Sorteo' : 
+                                        {isGameActive ? 'Sorteando...' :
+                                         (isGameOver ? 'Fin del Sorteo' :
                                          (showWinner ? 'Siguiente' : '¡SORTEAR!'))}
                                     </span>
                                 </div>
@@ -387,7 +429,7 @@
                         </div>
 
                         <HistoryList winners={winners} />
-                        
+
                         <footer className="text-center text-white/50 text-sm mt-12 pb-4">
                             <p>&copy; {new Date().getFullYear()} Evento Tómbola</p>
                         </footer>
