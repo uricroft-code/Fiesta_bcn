@@ -365,13 +365,16 @@
         }, 80);
       }, [prizes, numbers, isSpinningPrize, isSpinningNumber]);
 
-      // ✅ Exportar Excel (.xlsx) con 2 hojas
+      // ✅ Exportar Excel (.xlsx) con 3 hojas:
+      // 1) Ganadores  2) Restantes  3) Listado completo (Estado GANADO/PENDIENTE)
       const handleDownloadExcel = useCallback(() => {
         const now = new Date();
         const pad2 = (n) => String(n).padStart(2, '0');
         const stamp = `${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())}_${pad2(now.getHours())}${pad2(now.getMinutes())}`;
 
-        // Hoja 1: Ganadores (orden cronológico: primero arriba)
+        const wb = XLSX.utils.book_new();
+
+        // ---- Hoja 1: Ganadores (cronológico: 1º arriba)
         const winnersChrono = winners.slice().reverse();
         const winnersRows = winnersChrono.map((w, idx) => ({
           '#': idx + 1,
@@ -380,17 +383,13 @@
           'Fecha': w.timestamp.toLocaleDateString(),
           'Hora': w.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }));
-
-        // Hoja 2: Restantes
-        const remainingPrizesRows = prizes.map((p, idx) => ({ '#': idx + 1, 'Premio restante': p }));
-        const remainingIdsRows = numbers.map((id, idx) => ({ '#': idx + 1, 'ID restante': id }));
-
-        const wb = XLSX.utils.book_new();
-
         const wsGanadores = XLSX.utils.json_to_sheet(winnersRows.length ? winnersRows : [{ Info: 'Aún no hay ganadores' }]);
         XLSX.utils.book_append_sheet(wb, wsGanadores, 'Ganadores');
 
-        // “Restantes” en una misma hoja, una tabla debajo de otra
+        // ---- Hoja 2: Restantes (premios e IDs)
+        const remainingPrizesRows = prizes.map((p, idx) => ({ '#': idx + 1, 'Premio restante': p }));
+        const remainingIdsRows = numbers.map((id, idx) => ({ '#': idx + 1, 'ID restante': id }));
+
         const wsRestantes = XLSX.utils.aoa_to_sheet([
           ['Resumen'],
           ['Premios restantes', prizes.length],
@@ -406,7 +405,6 @@
           XLSX.utils.sheet_add_aoa(wsRestantes, [['(Sin premios restantes)']], { origin: 'B6' });
         }
 
-        // Calcular dónde empieza la tabla de IDs
         const startRowIds = 6 + Math.max(remainingPrizesRows.length, 1) + 2; // +2 espacio
         XLSX.utils.sheet_add_aoa(wsRestantes, [
           [],
@@ -421,6 +419,25 @@
         }
 
         XLSX.utils.book_append_sheet(wb, wsRestantes, 'Restantes');
+
+        // ---- Hoja 3: Listado completo (todos los IDs + estado)
+        const winnersMap = new Map(winners.map(w => [w.numero, w])); // numero = ID
+        const allIds = Array.from(new Set(NON_CORRELATIVE_IDS));
+
+        const fullRows = allIds.map((id, idx) => {
+          const w = winnersMap.get(id);
+          return {
+            '#': idx + 1,
+            'ID': id,
+            'Estado': w ? 'GANADO' : 'PENDIENTE',
+            'Premio (si aplica)': w ? w.premio : '',
+            'Fecha (si aplica)': w ? w.timestamp.toLocaleDateString() : '',
+            'Hora (si aplica)': w ? w.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
+          };
+        });
+
+        const wsFull = XLSX.utils.json_to_sheet(fullRows);
+        XLSX.utils.book_append_sheet(wb, wsFull, 'Listado completo');
 
         XLSX.writeFile(wb, `tombola_2025_${stamp}.xlsx`);
       }, [winners, prizes, numbers]);
