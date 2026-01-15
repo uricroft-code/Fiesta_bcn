@@ -1,489 +1,66 @@
-// Verb Adventure Island (tablet friendly)
-// 6 mundos, cada uno con 3 retos: tocar, arrastrar, memory.
-// Progreso en localStorage.
-
-const VERBS = [
-  ["be","was/were","been","ser/estar","👤"],
-  ["build","built","built","construir","🧱"],
-  ["bring","brought","brought","llevar/traer","🎁"],
-  ["buy","bought","bought","comprar","🛍️"],
-  ["cut","cut","cut","cortar","✂️"],
-  ["cost","cost","cost","costar/valer","💸"],
-  ["catch","caught","caught","coger/atrapar","🧤"],
-  ["do","did","done","hacer","✅"],
-  ["drink","drank","drunk","beber","🥤"],
-  ["eat","ate","eaten","comer","🍎"],
-  ["fall","fell","fallen","caer","🍂"],
-  ["find","found","found","encontrar","🔎"],
-  ["fight","fought","fought","luchar/pelear","🥊"],
-  ["fly","flew","flown","volar","🕊️"],
-  ["get","got","got/gotten","conseguir/obtener","🎯"],
-  ["go","went","gone","irse/partir","🚶"],
-  ["have","had","had","tener","🎒"],
-  ["know","knew","known","conocer/saber","🧠"],
-  ["learn","learnt","learnt","aprender","📚"],
-  ["lose","lost","lost","perder","😵"],
-  ["make","made","made","hacer/fabricar","🛠️"],
-  ["meet","met","met","encontrarse/reunirse","🤝"],
-  ["put","put","put","poner/colocar","📦"],
-  ["read","read","read","leer","📖"],
-  ["run","ran","run","correr","🏃"],
-  ["ride","rode","ridden","montar","🚲"],
-  ["say","said","said","decir","💬"],
-  ["see","saw","seen","ver","👀"],
-  ["sell","sold","sold","vender","🏷️"],
-  ["send","sent","sent","enviar","📨"],
-  ["sing","sang","sung","cantar","🎤"],
-  ["smell","smelt","smelt","oler","👃"],
-  ["sleep","slept","slept","dormir","😴"],
-  ["speak","spoke","spoken","hablar","🗣️"],
-  ["spell","spelt","spelt","deletrear","🔤"],
-  ["swim","swam","swum","nadar","🏊"],
-  ["take","took","taken","agarrar/coger","🖐️"],
-  ["tell","told","told","decir a / contar","📣"],
-  ["think","thought","thought","pensar/creer","💭"],
-  ["wear","wore","worn","usar/llevar puesto","👕"],
-  ["win","won","won","ganar","🏆"],
-  ["write","wrote","written","escribir","✍️"]
-];
-
-const WORLDS = [
-  { name:"Starter Village", icon:"🏡", desc:"Primeros verbos fáciles", range:[0,6] },
-  { name:"Jungle of Actions", icon:"🌴", desc:"Acciones en la jungla", range:[6,13] },
-  { name:"Ocean World", icon:"🌊", desc:"Aventura bajo el agua", range:[13,20] },
-  { name:"Sky City", icon:"☁️", desc:"Retos en el cielo", range:[20,27] },
-  { name:"Magic Castle", icon:"🏰", desc:"Hechizos de verbos", range:[27,34] },
-  { name:"Final Verb Challenge", icon:"👑", desc:"Desafío final", range:[34,41] }
-];
-
-const $ = (id)=>document.getElementById(id);
-
-const state = {
-  stars:0, coins:0, streak:0,
-  worldIndex:0,
-  step:1, // 1..3
-  completedWorlds: new Set(),
-  unlockedWorld: 0
-};
-
-const LS_KEY = "verb_adventure_save_v1";
-
-function save(){
-  const data = {
-    stars: state.stars,
-    coins: state.coins,
-    streak: state.streak,
-    completedWorlds: [...state.completedWorlds],
-    unlockedWorld: state.unlockedWorld
-  };
-  localStorage.setItem(LS_KEY, JSON.stringify(data));
-}
-function load(){
-  const raw = localStorage.getItem(LS_KEY);
-  if(!raw) return;
-  try{
-    const d = JSON.parse(raw);
-    state.stars = d.stars ?? 0;
-    state.coins = d.coins ?? 0;
-    state.streak = d.streak ?? 0;
-    state.completedWorlds = new Set(d.completedWorlds ?? []);
-    state.unlockedWorld = d.unlockedWorld ?? 0;
-  }catch(e){}
-}
-
-function hud(){
-  $("stars").textContent = state.stars;
-  $("coins").textContent = state.coins;
-  $("streak").textContent = state.streak;
-}
-
-function toast(msg){
-  const t = $("toast");
-  t.textContent = msg;
-  t.classList.add("show");
-  clearTimeout(toast._tm);
-  toast._tm = setTimeout(()=>t.classList.remove("show"), 1200);
-}
-
-function showScreen(menu=true){
-  $("screenMenu").classList.toggle("active", menu);
-  $("screenPlay").classList.toggle("active", !menu);
-}
-
-function renderWorlds(){
-  const grid = $("worldGrid");
-  grid.innerHTML = "";
-  WORLDS.forEach((w,i)=>{
-    const locked = i > state.unlockedWorld;
-    const done = state.completedWorlds.has(i);
-
-    const el = document.createElement("div");
-    el.className = "world" + (locked ? " locked":"") + (done ? " done":"");
-    el.innerHTML = `
-      <div class="wicon">${w.icon}</div>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <div class="logo">🗺️</div>
       <div>
-        <p class="wname">${w.name}</p>
-        <p class="wdesc">${w.desc}</p>
+        <h1>Verb Adventure Island</h1>
+        <p class="sub">Aprende verbos irregulares jugando (tablet friendly)</p>
       </div>
-      <div class="wlock">${locked ? "🔒" : (done ? "✅":"🎮")}</div>
-    `;
-    el.addEventListener("click", ()=>{
-      if(locked){
-        toast("🔒 Completa el mundo anterior para desbloquearlo");
-        return;
-      }
-      startWorld(i);
-    });
-    grid.appendChild(el);
-  });
-}
-
-function startWorld(index){
-  state.worldIndex = index;
-  state.step = 1;
-  $("btnNext").disabled = true;
-  showScreen(false);
-  renderStep();
-}
-
-function updateProgress(){
-  $("stepNow").textContent = state.step;
-  $("fill").style.width = ((state.step-1)/3*100) + "%";
-}
-
-function worldVerbs(){
-  const [a,b] = WORLDS[state.worldIndex].range;
-  return VERBS.slice(a,b);
-}
-
-function pickRandom(arr, n){
-  const copy = [...arr];
-  const out = [];
-  while(out.length<n && copy.length){
-    out.push(copy.splice(Math.floor(Math.random()*copy.length),1)[0]);
-  }
-  return out;
-}
-
-function reward(ok=true){
-  if(ok){
-    state.streak += 1;
-    state.stars += 1;
-    state.coins += 2;
-    toast(["Great job! ⭐","You fixed the verb! 🪙","Verb Hero! 🔥","Nice! ✅"][Math.floor(Math.random()*4)]);
-  }else{
-    state.streak = 0;
-    toast(["Almost! Try again 💪","Good try! One more! 🙂","Oops! Let’s fix it! 🧩"][Math.floor(Math.random()*3)]);
-  }
-  hud(); save();
-}
-
-function levelHeader(){
-  const w = WORLDS[state.worldIndex];
-  $("levelTitle").textContent = `${w.icon} ${w.name}`;
-  $("levelDesc").textContent = `Paso ${state.step}: ${["Toca","Arrastra","Memory"][state.step-1]} • Verbos: ${w.range[1]-w.range[0]}`;
-}
-
-function renderStep(){
-  levelHeader();
-  updateProgress();
-  $("btnNext").disabled = true;
-
-  const area = $("gameArea");
-  area.innerHTML = "";
-
-  if(state.step===1) renderTapChallenge(area);
-  if(state.step===2) renderDragChallenge(area);
-  if(state.step===3) renderMemoryChallenge(area);
-}
-
-function nextStep(){
-  if(state.step<3){
-    state.step += 1;
-    renderStep();
-    return;
-  }
-  // mundo completado
-  state.completedWorlds.add(state.worldIndex);
-  if(state.unlockedWorld < WORLDS.length-1){
-    state.unlockedWorld = Math.max(state.unlockedWorld, state.worldIndex+1);
-  }
-  save(); hud();
-  toast("🏁 ¡Mundo completado!");
-  showScreen(true);
-  renderWorlds();
-}
-
-$("btnNext").addEventListener("click", nextStep);
-$("btnBack").addEventListener("click", ()=>{
-  showScreen(true);
-  renderWorlds();
-});
-
-$("btnHow").addEventListener("click", ()=>{
-  const box = $("howBox");
-  box.style.display = box.style.display==="none" ? "block":"none";
-});
-$("btnReset").addEventListener("click", ()=>{
-  localStorage.removeItem(LS_KEY);
-  state.stars=0; state.coins=0; state.streak=0;
-  state.completedWorlds=new Set();
-  state.unlockedWorld=0;
-  hud(); renderWorlds();
-  toast("Progreso reiniciado 🔄");
-});
-
-
-// ====== RETO 1: Toca la forma correcta ======
-function renderTapChallenge(area){
-  const verbs = worldVerbs();
-  const v = verbs[Math.floor(Math.random()*verbs.length)];
-  const [inf,past,pp,es,emoji] = v;
-
-  // pregunta: elegir pasado simple o participio
-  const askPast = Math.random() < 0.5;
-  const correct = askPast ? past : pp;
-
-  const optionsPool = verbs.map(x=> askPast ? x[1] : x[2]);
-  let options = pickRandom(optionsPool.filter(x=>x!==correct), 3);
-  options.push(correct);
-  options = pickRandom(options, options.length).sort(()=>Math.random()-0.5);
-
-  const html = `
-    <h3 class="bigTitle">1️⃣ Toca la respuesta correcta</h3>
-    <p class="hint">Ayuda a ${emoji} <b>${inf.toUpperCase()}</b> (${es})</p>
-
-    <div class="panel">
-      <p class="hint">¿Cuál es el <b>${askPast ? "PAST SIMPLE" : "PAST PARTICIPLE"}</b> de <b>${inf}</b>?</p>
-      <div class="answers" id="ans"></div>
-      <p class="hint" style="margin-top:12px;">Pista: ${inf} → <b>${past}</b> / <b>${pp}</b></p>
     </div>
-  `;
-  area.innerHTML = html;
 
-  const ans = $("ans");
-  options.forEach(op=>{
-    const c = document.createElement("div");
-    c.className = "choice";
-    c.textContent = op;
-    c.addEventListener("click", ()=>{
-      if(op===correct){
-        c.classList.add("good");
-        reward(true);
-        $("btnNext").disabled = false;
-      }else{
-        c.classList.add("bad");
-        reward(false);
-      }
-    });
-    ans.appendChild(c);
-  });
-}
+    <div class="hud">
+      <div class="pill">⭐ <span id="stars">0</span></div>
+      <div class="pill">🪙 <span id="coins">0</span></div>
+      <div class="pill">🔥 Racha: <span id="streak">0</span></div>
+    </div>
+  </header>
 
-// ====== RETO 2: Arrastrar (drag & drop) ======
-function renderDragChallenge(area){
-  const verbs = worldVerbs();
-  const chosen = pickRandom(verbs, 3);
-
-  // Una frase por verbo (simple)
-  const templates = [
-    (inf,past)=>`Today I ${inf}. Yesterday I ______.`,
-    (inf,past)=>`I ${inf} every day. Yesterday I ______.`,
-    (inf,past)=>`Now I ${inf}. Before, I ______.`,
-  ];
-
-  const zones = chosen.map(v=>{
-    const [inf,past,pp,es,emoji] = v;
-    const t = templates[Math.floor(Math.random()*templates.length)](inf,past);
-    return { inf,past,pp,es,emoji, text:t };
-  });
-
-  const drags = zones.map(z=>z.past).sort(()=>Math.random()-0.5);
-
-  area.innerHTML = `
-    <h3 class="bigTitle">2️⃣ Arrastra la palabra correcta</h3>
-    <p class="hint">Arrastra el <b>PAST SIMPLE</b> para completar la frase.</p>
-
-    <div class="dragRow">
-      <div class="panel">
-        <p class="hint"><b>Palabras para arrastrar</b> (tócalas y arrástralas):</p>
-        <div class="draggables" id="drags"></div>
+  <main class="main">
+    <section id="screenMenu" class="screen active">
+      <div class="card">
+        <h2>Elige un mundo</h2>
+        <p>En cada mundo arreglas verbos para avanzar. Toca un mundo para empezar.</p>
+        <div id="worldGrid" class="grid"></div>
+        <div class="row">
+          <button class="btn ghost" id="btnReset">🔄 Reiniciar progreso</button>
+          <button class="btn" id="btnHow">❓ Cómo se juega</button>
+        </div>
       </div>
 
-      <div class="panel" id="drops"></div>
-    </div>
-  `;
+      <div class="card small" id="howBox" style="display:none;">
+        <h3>Cómo se juega</h3>
+        <ul>
+          <li>✅ Acertar = ganas ⭐ y 🪙</li>
+          <li>🎯 En cada nivel hay 3 retos: tocar, arrastrar, memory</li>
+          <li>❌ Si fallas, no pasa nada: te doy pista y lo intentas otra vez</li>
+        </ul>
+      </div>
+    </section>
 
-  const dragsBox = $("drags");
-  drags.forEach(word=>{
-    const d = document.createElement("div");
-    d.className = "drag";
-    d.textContent = word;
-    d.draggable = true;
-    d.addEventListener("dragstart", (e)=>e.dataTransfer.setData("text/plain", word));
-    dragsBox.appendChild(d);
-  });
+    <section id="screenPlay" class="screen">
+      <div class="card">
+        <div class="levelTop">
+          <button class="btn ghost" id="btnBack">⬅️ Menú</button>
+          <div class="levelInfo">
+            <h2 id="levelTitle">Mundo</h2>
+            <p id="levelDesc">Nivel</p>
+          </div>
+          <button class="btn" id="btnNext" disabled>Siguiente ➜</button>
+        </div>
 
-  const drops = $("drops");
-  drops.innerHTML = `<p class="hint"><b>Frases</b> (suelta aquí la palabra correcta):</p>`;
-  zones.forEach((z, idx)=>{
-    const wrap = document.createElement("div");
-    wrap.style.marginBottom = "10px";
-    wrap.innerHTML = `
-      <div class="hint">${z.emoji} <b>${z.inf}</b> (${z.es})</div>
-      <div class="hint">${z.text}</div>
-      <div class="dropzone" data-correct="${z.past}" id="dz_${idx}">Suelta aquí</div>
-    `;
-    drops.appendChild(wrap);
-  });
+        <div class="progress">
+          <div class="bar"><div class="fill" id="fill"></div></div>
+          <div class="ptext"><span id="stepNow">1</span>/3</div>
+        </div>
 
-  let correctCount = 0;
+        <div id="gameArea" class="gameArea"></div>
+      </div>
+    </section>
 
-  area.querySelectorAll(".dropzone").forEach(zone=>{
-    zone.addEventListener("dragover",(e)=>e.preventDefault());
-    zone.addEventListener("drop",(e)=>{
-      e.preventDefault();
-      const word = e.dataTransfer.getData("text/plain");
-      if(!word) return;
+    <section id="toast" class="toast"></section>
+  </main>
 
-      if(zone.classList.contains("filled")) return;
-
-      const correct = zone.dataset.correct;
-      if(word === correct){
-        zone.textContent = word;
-        zone.classList.add("filled");
-        reward(true);
-        correctCount += 1;
-        if(correctCount === zones.length){
-          toast("✅ ¡Frases completas!");
-          $("btnNext").disabled = false;
-        }
-      }else{
-        reward(false);
-        toast(`Pista: mira el verbo y prueba otra palabra 🙂`);
-      }
-    });
-  });
-
-  // Fallback para tablet: tap-to-place (si el drag no va fino)
-  // (Muy útil en algunos móviles)
-  let selectedWord = null;
-  area.querySelectorAll(".drag").forEach(d=>{
-    d.addEventListener("click", ()=>{
-      selectedWord = d.textContent;
-      toast(`Seleccionada: ${selectedWord} (toca un hueco para colocarla)`);
-    });
-  });
-  area.querySelectorAll(".dropzone").forEach(zone=>{
-    zone.addEventListener("click", ()=>{
-      if(!selectedWord || zone.classList.contains("filled")) return;
-      const correct = zone.dataset.correct;
-      if(selectedWord === correct){
-        zone.textContent = selectedWord;
-        zone.classList.add("filled");
-        reward(true);
-        correctCount += 1;
-        if(correctCount === zones.length){
-          toast("✅ ¡Frases completas!");
-          $("btnNext").disabled = false;
-        }
-      }else{
-        reward(false);
-      }
-    });
-  });
-}
-
-// ====== RETO 3: Memory (parejas inf -> past) ======
-function renderMemoryChallenge(area){
-  const verbs = worldVerbs();
-  const chosen = pickRandom(verbs, 6); // 6 parejas
-
-  const cards = [];
-  chosen.forEach(v=>{
-    const [inf,past,pp,es,emoji] = v;
-    cards.push({key:inf, label:`${emoji}\n${inf}`, pair:inf, type:"inf"});
-    cards.push({key:inf, label:`🕰️\n${past}`, pair:inf, type:"past"});
-  });
-
-  // shuffle
-  cards.sort(()=>Math.random()-0.5);
-
-  area.innerHTML = `
-    <h3 class="bigTitle">3️⃣ Memory de verbos</h3>
-    <p class="hint">Encuentra la pareja: <b>infinitivo</b> + <b>past simple</b>.</p>
-    <div class="panel">
-      <div class="memoryGrid" id="mem"></div>
-      <p class="hint" style="margin-top:12px;">Cuando completes todas, desbloqueas “Siguiente”.</p>
-    </div>
-  `;
-
-  const mem = $("mem");
-  cards.forEach((c, idx)=>{
-    const t = document.createElement("div");
-    t.className = "tile";
-    t.dataset.pair = c.pair;
-    t.dataset.type = c.type;
-    t.dataset.idx = idx;
-    t.textContent = "❓";
-    mem.appendChild(t);
-  });
-
-  let first = null;
-  let lock = false;
-  let matched = 0;
-
-  mem.addEventListener("click", (e)=>{
-    const tile = e.target.closest(".tile");
-    if(!tile || lock) return;
-    if(tile.classList.contains("matched") || tile.classList.contains("revealed")) return;
-
-    const idx = Number(tile.dataset.idx);
-    const card = cards[idx];
-    tile.classList.add("revealed");
-    tile.textContent = card.label;
-
-    if(!first){
-      first = tile;
-      return;
-    }
-
-    // second pick
-    const samePair = first.dataset.pair === tile.dataset.pair;
-    const differentType = first.dataset.type !== tile.dataset.type;
-
-    if(samePair && differentType){
-      // match!
-      first.classList.add("matched");
-      tile.classList.add("matched");
-      first.classList.remove("revealed");
-      tile.classList.remove("revealed");
-      reward(true);
-      matched += 1;
-
-      first = null;
-
-      if(matched === chosen.length){
-        toast("🏆 ¡Memory completado!");
-        $("btnNext").disabled = false;
-      }
-    }else{
-      reward(false);
-      lock = true;
-      setTimeout(()=>{
-        first.classList.remove("revealed");
-        tile.classList.remove("revealed");
-        first.textContent = "❓";
-        tile.textContent = "❓";
-        first = null;
-        lock = false;
-      }, 650);
-    }
-  });
-}
-
-// INIT
-load();
-hud();
-renderWorlds();
-showScreen(true);
+  <footer class="foot">
+    <span>💡 Tip: en iPad/Android puedes “Añadir a pantalla de inicio” para usarlo como app.</span>
+  </footer>
+</div>
