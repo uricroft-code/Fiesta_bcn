@@ -1,514 +1,489 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tómbola 2025</title>
+// Verb Adventure Island (tablet friendly)
+// 6 mundos, cada uno con 3 retos: tocar, arrastrar, memory.
+// Progreso en localStorage.
 
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
+const VERBS = [
+  ["be","was/were","been","ser/estar","👤"],
+  ["build","built","built","construir","🧱"],
+  ["bring","brought","brought","llevar/traer","🎁"],
+  ["buy","bought","bought","comprar","🛍️"],
+  ["cut","cut","cut","cortar","✂️"],
+  ["cost","cost","cost","costar/valer","💸"],
+  ["catch","caught","caught","coger/atrapar","🧤"],
+  ["do","did","done","hacer","✅"],
+  ["drink","drank","drunk","beber","🥤"],
+  ["eat","ate","eaten","comer","🍎"],
+  ["fall","fell","fallen","caer","🍂"],
+  ["find","found","found","encontrar","🔎"],
+  ["fight","fought","fought","luchar/pelear","🥊"],
+  ["fly","flew","flown","volar","🕊️"],
+  ["get","got","got/gotten","conseguir/obtener","🎯"],
+  ["go","went","gone","irse/partir","🚶"],
+  ["have","had","had","tener","🎒"],
+  ["know","knew","known","conocer/saber","🧠"],
+  ["learn","learnt","learnt","aprender","📚"],
+  ["lose","lost","lost","perder","😵"],
+  ["make","made","made","hacer/fabricar","🛠️"],
+  ["meet","met","met","encontrarse/reunirse","🤝"],
+  ["put","put","put","poner/colocar","📦"],
+  ["read","read","read","leer","📖"],
+  ["run","ran","run","correr","🏃"],
+  ["ride","rode","ridden","montar","🚲"],
+  ["say","said","said","decir","💬"],
+  ["see","saw","seen","ver","👀"],
+  ["sell","sold","sold","vender","🏷️"],
+  ["send","sent","sent","enviar","📨"],
+  ["sing","sang","sung","cantar","🎤"],
+  ["smell","smelt","smelt","oler","👃"],
+  ["sleep","slept","slept","dormir","😴"],
+  ["speak","spoke","spoken","hablar","🗣️"],
+  ["spell","spelt","spelt","deletrear","🔤"],
+  ["swim","swam","swum","nadar","🏊"],
+  ["take","took","taken","agarrar/coger","🖐️"],
+  ["tell","told","told","decir a / contar","📣"],
+  ["think","thought","thought","pensar/creer","💭"],
+  ["wear","wore","worn","usar/llevar puesto","👕"],
+  ["win","won","won","ganar","🏆"],
+  ["write","wrote","written","escribir","✍️"]
+];
 
-  <!-- Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+const WORLDS = [
+  { name:"Starter Village", icon:"🏡", desc:"Primeros verbos fáciles", range:[0,6] },
+  { name:"Jungle of Actions", icon:"🌴", desc:"Acciones en la jungla", range:[6,13] },
+  { name:"Ocean World", icon:"🌊", desc:"Aventura bajo el agua", range:[13,20] },
+  { name:"Sky City", icon:"☁️", desc:"Retos en el cielo", range:[20,27] },
+  { name:"Magic Castle", icon:"🏰", desc:"Hechizos de verbos", range:[27,34] },
+  { name:"Final Verb Challenge", icon:"👑", desc:"Desafío final", range:[34,41] }
+];
 
-  <!-- React & ReactDOM (UMD for simple browser usage) -->
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+const $ = (id)=>document.getElementById(id);
 
-  <!-- ✅ SheetJS (XLSX) para exportar Excel -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+const state = {
+  stars:0, coins:0, streak:0,
+  worldIndex:0,
+  step:1, // 1..3
+  completedWorlds: new Set(),
+  unlockedWorld: 0
+};
 
-  <!-- Babel for in-browser transpilation -->
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+const LS_KEY = "verb_adventure_save_v1";
 
-  <style>
-    body { font-family: 'Inter', sans-serif; }
+function save(){
+  const data = {
+    stars: state.stars,
+    coins: state.coins,
+    streak: state.streak,
+    completedWorlds: [...state.completedWorlds],
+    unlockedWorld: state.unlockedWorld
+  };
+  localStorage.setItem(LS_KEY, JSON.stringify(data));
+}
+function load(){
+  const raw = localStorage.getItem(LS_KEY);
+  if(!raw) return;
+  try{
+    const d = JSON.parse(raw);
+    state.stars = d.stars ?? 0;
+    state.coins = d.coins ?? 0;
+    state.streak = d.streak ?? 0;
+    state.completedWorlds = new Set(d.completedWorlds ?? []);
+    state.unlockedWorld = d.unlockedWorld ?? 0;
+  }catch(e){}
+}
 
-    @keyframes fade-in-up {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .animate-fade-in-up {
-      animation: fade-in-up 0.5s ease-out forwards;
-    }
-  </style>
+function hud(){
+  $("stars").textContent = state.stars;
+  $("coins").textContent = state.coins;
+  $("streak").textContent = state.streak;
+}
 
-  <script type="importmap">
-  {
-    "imports": {
-      "react": "https://aistudiocdn.com/react@^19.2.1",
-      "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
-      "react/": "https://aistudiocdn.com/react@^19.2.1/"
-    }
+function toast(msg){
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toast._tm);
+  toast._tm = setTimeout(()=>t.classList.remove("show"), 1200);
+}
+
+function showScreen(menu=true){
+  $("screenMenu").classList.toggle("active", menu);
+  $("screenPlay").classList.toggle("active", !menu);
+}
+
+function renderWorlds(){
+  const grid = $("worldGrid");
+  grid.innerHTML = "";
+  WORLDS.forEach((w,i)=>{
+    const locked = i > state.unlockedWorld;
+    const done = state.completedWorlds.has(i);
+
+    const el = document.createElement("div");
+    el.className = "world" + (locked ? " locked":"") + (done ? " done":"");
+    el.innerHTML = `
+      <div class="wicon">${w.icon}</div>
+      <div>
+        <p class="wname">${w.name}</p>
+        <p class="wdesc">${w.desc}</p>
+      </div>
+      <div class="wlock">${locked ? "🔒" : (done ? "✅":"🎮")}</div>
+    `;
+    el.addEventListener("click", ()=>{
+      if(locked){
+        toast("🔒 Completa el mundo anterior para desbloquearlo");
+        return;
+      }
+      startWorld(i);
+    });
+    grid.appendChild(el);
+  });
+}
+
+function startWorld(index){
+  state.worldIndex = index;
+  state.step = 1;
+  $("btnNext").disabled = true;
+  showScreen(false);
+  renderStep();
+}
+
+function updateProgress(){
+  $("stepNow").textContent = state.step;
+  $("fill").style.width = ((state.step-1)/3*100) + "%";
+}
+
+function worldVerbs(){
+  const [a,b] = WORLDS[state.worldIndex].range;
+  return VERBS.slice(a,b);
+}
+
+function pickRandom(arr, n){
+  const copy = [...arr];
+  const out = [];
+  while(out.length<n && copy.length){
+    out.push(copy.splice(Math.floor(Math.random()*copy.length),1)[0]);
   }
-  </script>
-</head>
+  return out;
+}
 
-<body>
-  <div id="root"></div>
+function reward(ok=true){
+  if(ok){
+    state.streak += 1;
+    state.stars += 1;
+    state.coins += 2;
+    toast(["Great job! ⭐","You fixed the verb! 🪙","Verb Hero! 🔥","Nice! ✅"][Math.floor(Math.random()*4)]);
+  }else{
+    state.streak = 0;
+    toast(["Almost! Try again 💪","Good try! One more! 🙂","Oops! Let’s fix it! 🧩"][Math.floor(Math.random()*3)]);
+  }
+  hud(); save();
+}
 
-  <script type="text/babel">
-    const { useState, useCallback } = React;
+function levelHeader(){
+  const w = WORLDS[state.worldIndex];
+  $("levelTitle").textContent = `${w.icon} ${w.name}`;
+  $("levelDesc").textContent = `Paso ${state.step}: ${["Toca","Arrastra","Memory"][state.step-1]} • Verbos: ${w.range[1]-w.range[0]}`;
+}
 
-    // --- CONSTANTS ---
-    const PRIZE_CONFIG = [
-      { name: 'Billetes de Avión', count: 1 },
-    ];
+function renderStep(){
+  levelHeader();
+  updateProgress();
+  $("btnNext").disabled = true;
 
-    // Flat list of prizes based on counts
-    const INITIAL_PRIZES = PRIZE_CONFIG.flatMap(item => Array(item.count).fill(item.name));
+  const area = $("gameArea");
+  area.innerHTML = "";
 
-    // ✅ IDs NO correlativos (pool completo)
-    const NON_CORRELATIVE_IDS = [
-   
-      60003695
-     
-    ];
+  if(state.step===1) renderTapChallenge(area);
+  if(state.step===2) renderDragChallenge(area);
+  if(state.step===3) renderMemoryChallenge(area);
+}
 
-    const UNIQUE_IDS = Array.from(new Set(NON_CORRELATIVE_IDS));
-    const INITIAL_NUMBER_COUNT = UNIQUE_IDS.length;
+function nextStep(){
+  if(state.step<3){
+    state.step += 1;
+    renderStep();
+    return;
+  }
+  // mundo completado
+  state.completedWorlds.add(state.worldIndex);
+  if(state.unlockedWorld < WORLDS.length-1){
+    state.unlockedWorld = Math.max(state.unlockedWorld, state.worldIndex+1);
+  }
+  save(); hud();
+  toast("🏁 ¡Mundo completado!");
+  showScreen(true);
+  renderWorlds();
+}
 
-    // --- ICONS ---
-    const GiftIcon = ({ className }) => (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
-      </svg>
-    );
+$("btnNext").addEventListener("click", nextStep);
+$("btnBack").addEventListener("click", ()=>{
+  showScreen(true);
+  renderWorlds();
+});
 
-    const UsersIcon = ({ className }) => (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-      </svg>
-    );
+$("btnHow").addEventListener("click", ()=>{
+  const box = $("howBox");
+  box.style.display = box.style.display==="none" ? "block":"none";
+});
+$("btnReset").addEventListener("click", ()=>{
+  localStorage.removeItem(LS_KEY);
+  state.stars=0; state.coins=0; state.streak=0;
+  state.completedWorlds=new Set();
+  state.unlockedWorld=0;
+  hud(); renderWorlds();
+  toast("Progreso reiniciado 🔄");
+});
 
-    const RotateCwIcon = ({ className }) => (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-      </svg>
-    );
 
-    const TrophyIcon = ({ className }) => (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-      </svg>
-    );
+// ====== RETO 1: Toca la forma correcta ======
+function renderTapChallenge(area){
+  const verbs = worldVerbs();
+  const v = verbs[Math.floor(Math.random()*verbs.length)];
+  const [inf,past,pp,es,emoji] = v;
 
-    const TrashIcon = ({ className }) => (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-      </svg>
-    );
+  // pregunta: elegir pasado simple o participio
+  const askPast = Math.random() < 0.5;
+  const correct = askPast ? past : pp;
 
-    const InfoIcon = ({ className }) => (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    );
+  const optionsPool = verbs.map(x=> askPast ? x[1] : x[2]);
+  let options = pickRandom(optionsPool.filter(x=>x!==correct), 3);
+  options.push(correct);
+  options = pickRandom(options, options.length).sort(()=>Math.random()-0.5);
 
-    const XIcon = ({ className }) => (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-      </svg>
-    );
+  const html = `
+    <h3 class="bigTitle">1️⃣ Toca la respuesta correcta</h3>
+    <p class="hint">Ayuda a ${emoji} <b>${inf.toUpperCase()}</b> (${es})</p>
 
-    // --- COMPONENTS ---
-    const WinnerBanner = ({ winner, visible }) => {
-      if (!visible) return null;
-      return (
-        <div className="mb-6 bg-yellow-400 border-4 border-yellow-600 rounded-xl p-6 text-center animate-pulse shadow-xl transform transition-all duration-500 hover:scale-105">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2 uppercase tracking-wider">
-            🎉 ¡Ganador! 🎉
-          </h2>
-          <div className="space-y-2">
-            <p className="text-4xl md:text-5xl font-black text-blue-900">
-              #{winner.numero}
-            </p>
-            <p className="text-2xl md:text-3xl font-bold text-gray-800">
-              {winner.premio}
-            </p>
-          </div>
-        </div>
-      );
-    };
+    <div class="panel">
+      <p class="hint">¿Cuál es el <b>${askPast ? "PAST SIMPLE" : "PAST PARTICIPLE"}</b> de <b>${inf}</b>?</p>
+      <div class="answers" id="ans"></div>
+      <p class="hint" style="margin-top:12px;">Pista: ${inf} → <b>${past}</b> / <b>${pp}</b></p>
+    </div>
+  `;
+  area.innerHTML = html;
 
-    const RaffleCard = ({ title, icon, remainingCount, currentValue, isSpinning, themeColor }) => {
-      const isPink = themeColor === 'pink';
-      const borderColor = isPink ? 'border-pink-300' : 'border-blue-300';
-      const gradientStart = isPink ? 'from-pink-100' : 'from-blue-100';
-      const gradientEnd = isPink ? 'to-purple-100' : 'to-indigo-100';
-      const badgeColor = isPink ? 'bg-pink-500' : 'bg-blue-500';
+  const ans = $("ans");
+  options.forEach(op=>{
+    const c = document.createElement("div");
+    c.className = "choice";
+    c.textContent = op;
+    c.addEventListener("click", ()=>{
+      if(op===correct){
+        c.classList.add("good");
+        reward(true);
+        $("btnNext").disabled = false;
+      }else{
+        c.classList.add("bad");
+        reward(false);
+      }
+    });
+    ans.appendChild(c);
+  });
+}
 
-      return (
-        <div className="bg-white rounded-xl shadow-2xl p-6 flex flex-col h-full transform transition-all hover:shadow-3xl relative overflow-hidden">
-          <div className="flex items-center justify-between mb-4 relative z-10">
-            <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-              {icon}
-              {title}
-            </h2>
-            <span className={`${badgeColor} text-white px-3 py-1 rounded-full font-bold text-sm shadow-sm`}>
-              {remainingCount} restantes
-            </span>
-          </div>
+// ====== RETO 2: Arrastrar (drag & drop) ======
+function renderDragChallenge(area){
+  const verbs = worldVerbs();
+  const chosen = pickRandom(verbs, 3);
 
-          <div className={`bg-gradient-to-br ${gradientStart} ${gradientEnd} rounded-lg p-4 mb-0 flex-grow flex items-center justify-center border-4 ${borderColor} min-h-[220px] shadow-inner relative z-10`}>
-            <p className={`font-bold text-center text-gray-800 break-words w-full ${typeof currentValue === 'number' ? 'text-7xl' : 'text-3xl'}`}>
-              {currentValue !== null ? currentValue : (typeof currentValue === 'number' ? '?' : '🎁')}
-            </p>
-            {isSpinning && (
-              <div className="absolute inset-0 bg-white/10 flex items-center justify-center">
-                <div className={`w-full h-1 ${badgeColor} animate-pulse absolute bottom-0`}></div>
-              </div>
-            )}
-          </div>
-        </div>
-      );
-    };
+  // Una frase por verbo (simple)
+  const templates = [
+    (inf,past)=>`Today I ${inf}. Yesterday I ______.`,
+    (inf,past)=>`I ${inf} every day. Yesterday I ______.`,
+    (inf,past)=>`Now I ${inf}. Before, I ______.`,
+  ];
 
-    const HistoryList = ({ winners }) => {
-      if (winners.length === 0) return null;
-      return (
-        <div className="bg-white rounded-xl shadow-2xl p-6 mt-8 animate-fade-in-up">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-            <TrophyIcon className="w-6 h-6 text-yellow-500" />
-            Ganadores ({winners.length})
-          </h2>
-          <div className="overflow-hidden rounded-lg border border-gray-200">
-            <div className="overflow-x-auto max-h-96">
-              <table className="w-full text-sm text-left text-gray-500">
-                <thead className="text-xs text-gray-700 uppercase bg-gray-100 sticky top-0 z-10 shadow-sm">
-                  <tr>
-                    <th className="px-6 py-3">#</th>
-                    <th className="px-6 py-3">Número/ID</th>
-                    <th className="px-6 py-3">Premio</th>
-                    <th className="px-6 py-3 text-right">Hora</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {winners.map((winner, idx) => (
-                    <tr key={winner.id} className="bg-white border-b hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 font-medium text-gray-900">{winners.length - idx}</td>
-                      <td className="px-6 py-4 font-bold text-blue-600 text-lg">#{winner.numero}</td>
-                      <td className="px-6 py-4 text-gray-900 font-medium">{winner.premio}</td>
-                      <td className="px-6 py-4 text-right text-gray-400 font-mono">
-                        {winner.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      );
-    };
+  const zones = chosen.map(v=>{
+    const [inf,past,pp,es,emoji] = v;
+    const t = templates[Math.floor(Math.random()*templates.length)](inf,past);
+    return { inf,past,pp,es,emoji, text:t };
+  });
 
-    const InfoModal = ({ isOpen, onClose, prizesRemaining, idsRemaining }) => {
-      if (!isOpen) return null;
-      return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={onClose} />
-          <div className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 animate-fade-in-up transform transition-all">
-            <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
-              <XIcon className="w-6 h-6" />
-            </button>
-            <div className="text-center mb-6">
-              <div className="inline-block p-3 bg-blue-100 rounded-full mb-3">
-                <TrophyIcon className="w-8 h-8 text-blue-600" />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-800">Cómo Funciona</h2>
-            </div>
-            <div className="space-y-4 text-gray-700">
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 space-y-2">
-                <p className="flex items-center gap-2">✅ <span className="font-semibold">{INITIAL_PRIZES.length} premios</span> para sortear</p>
-                <p className="flex items-center gap-2">✅ <span className="font-semibold">{INITIAL_NUMBER_COUNT} IDs</span> disponibles</p>
-                <p className="flex items-center gap-2">✅ Se sortearán <span className="font-semibold">{INITIAL_PRIZES.length} ganadores</span></p>
-                <p className="flex items-center gap-2">⚠️ Quedarán <span className="font-semibold">{INITIAL_NUMBER_COUNT - INITIAL_PRIZES.length} IDs</span> sin premio</p>
-                <div className="pt-2 border-t">
-                  <p className="text-sm text-gray-600">Ahora mismo: <strong>{prizesRemaining}</strong> premios restantes, <strong>{idsRemaining}</strong> IDs restantes.</p>
-                </div>
-              </div>
-              <div className="space-y-2 text-sm">
-                <p>🔴 <strong>Los IDs nunca se repiten:</strong> se eliminan tras salir.</p>
-                <p>🎁 <strong>Los premios se eliminan</strong> de la lista tras ser ganados.</p>
-              </div>
-              <div className="border-t pt-4 mt-4">
-                <h3 className="font-bold text-gray-900 mb-2">Instrucciones:</h3>
-                <ol className="list-decimal list-inside space-y-1 text-gray-600 ml-1">
-                  <li>Pulsa el botón grande <strong>¡SORTEAR!</strong></li>
-                  <li>La tómbola seleccionará primero un <strong>premio</strong> al azar.</li>
-                  <li>Automáticamente buscará el <strong>ID ganador</strong>.</li>
-                  <li>¡El resultado aparecerá en pantalla!</li>
-                </ol>
-              </div>
-            </div>
-            <div className="mt-6">
-              <button onClick={onClose} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition-colors">
-                Entendido
-              </button>
-            </div>
-          </div>
-        </div>
-      );
-    };
+  const drags = zones.map(z=>z.past).sort(()=>Math.random()-0.5);
 
-    // --- MAIN APP COMPONENT ---
-    const App = () => {
-      const [prizes, setPrizes] = useState(INITIAL_PRIZES);
-      const [numbers, setNumbers] = useState(() => UNIQUE_IDS);
+  area.innerHTML = `
+    <h3 class="bigTitle">2️⃣ Arrastra la palabra correcta</h3>
+    <p class="hint">Arrastra el <b>PAST SIMPLE</b> para completar la frase.</p>
 
-      const [currentPrize, setCurrentPrize] = useState(null);
-      const [currentNumber, setCurrentNumber] = useState(null);
+    <div class="dragRow">
+      <div class="panel">
+        <p class="hint"><b>Palabras para arrastrar</b> (tócalas y arrástralas):</p>
+        <div class="draggables" id="drags"></div>
+      </div>
 
-      const [isSpinningPrize, setIsSpinningPrize] = useState(false);
-      const [isSpinningNumber, setIsSpinningNumber] = useState(false);
+      <div class="panel" id="drops"></div>
+    </div>
+  `;
 
-      const [winners, setWinners] = useState([]);
-      const [showWinner, setShowWinner] = useState(false);
-      const [showInfo, setShowInfo] = useState(false);
+  const dragsBox = $("drags");
+  drags.forEach(word=>{
+    const d = document.createElement("div");
+    d.className = "drag";
+    d.textContent = word;
+    d.draggable = true;
+    d.addEventListener("dragstart", (e)=>e.dataTransfer.setData("text/plain", word));
+    dragsBox.appendChild(d);
+  });
 
-      const handleAutoSpin = useCallback(() => {
-        if (prizes.length === 0 || numbers.length === 0 || isSpinningPrize || isSpinningNumber) return;
+  const drops = $("drops");
+  drops.innerHTML = `<p class="hint"><b>Frases</b> (suelta aquí la palabra correcta):</p>`;
+  zones.forEach((z, idx)=>{
+    const wrap = document.createElement("div");
+    wrap.style.marginBottom = "10px";
+    wrap.innerHTML = `
+      <div class="hint">${z.emoji} <b>${z.inf}</b> (${z.es})</div>
+      <div class="hint">${z.text}</div>
+      <div class="dropzone" data-correct="${z.past}" id="dz_${idx}">Suelta aquí</div>
+    `;
+    drops.appendChild(wrap);
+  });
 
-        setShowWinner(false);
-        setCurrentPrize(null);
-        setCurrentNumber(null);
+  let correctCount = 0;
 
-        setIsSpinningPrize(true);
-        let prizeCounter = 0;
-        const prizeInterval = setInterval(() => {
-          setCurrentPrize(prizes[Math.floor(Math.random() * prizes.length)]);
-          prizeCounter++;
-          if (prizeCounter > 20) {
-            clearInterval(prizeInterval);
+  area.querySelectorAll(".dropzone").forEach(zone=>{
+    zone.addEventListener("dragover",(e)=>e.preventDefault());
+    zone.addEventListener("drop",(e)=>{
+      e.preventDefault();
+      const word = e.dataTransfer.getData("text/plain");
+      if(!word) return;
 
-            const finalPrize = prizes[Math.floor(Math.random() * prizes.length)];
-            setCurrentPrize(finalPrize);
-            setIsSpinningPrize(false);
+      if(zone.classList.contains("filled")) return;
 
-            setTimeout(() => {
-              setIsSpinningNumber(true);
-              let numberCounter = 0;
-              const numberInterval = setInterval(() => {
-                setCurrentNumber(numbers[Math.floor(Math.random() * numbers.length)]);
-                numberCounter++;
-                if (numberCounter > 30) {
-                  clearInterval(numberInterval);
-
-                  const finalNumber = numbers[Math.floor(Math.random() * numbers.length)];
-                  setCurrentNumber(finalNumber);
-                  setIsSpinningNumber(false);
-
-                  const newWinner = { id: Date.now(), premio: finalPrize, numero: finalNumber, timestamp: new Date() };
-                  setWinners(prev => [newWinner, ...prev]);
-
-                  setPrizes(prev => {
-                    const index = prev.indexOf(finalPrize);
-                    if (index > -1) {
-                      const newPrizes = [...prev];
-                      newPrizes.splice(index, 1);
-                      return newPrizes;
-                    }
-                    return prev;
-                  });
-
-                  setNumbers(prev => prev.filter(n => n !== finalNumber));
-                  setShowWinner(true);
-                }
-              }, 60);
-            }, 500);
-          }
-        }, 80);
-      }, [prizes, numbers, isSpinningPrize, isSpinningNumber]);
-
-      // ✅ Exportar Excel (.xlsx) con 3 hojas:
-      // 1) Ganadores  2) Restantes  3) Listado completo (Estado GANADO/PENDIENTE)
-      const handleDownloadExcel = useCallback(() => {
-        const now = new Date();
-        const pad2 = (n) => String(n).padStart(2, '0');
-        const stamp = `${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())}_${pad2(now.getHours())}${pad2(now.getMinutes())}`;
-
-        const wb = XLSX.utils.book_new();
-
-        // ---- Hoja 1: Ganadores (cronológico: 1º arriba)
-        const winnersChrono = winners.slice().reverse();
-        const winnersRows = winnersChrono.map((w, idx) => ({
-          '#': idx + 1,
-          'Número/ID': w.numero,
-          'Premio': w.premio,
-          'Fecha': w.timestamp.toLocaleDateString(),
-          'Hora': w.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }));
-        const wsGanadores = XLSX.utils.json_to_sheet(winnersRows.length ? winnersRows : [{ Info: 'Aún no hay ganadores' }]);
-        XLSX.utils.book_append_sheet(wb, wsGanadores, 'Ganadores');
-
-        // ---- Hoja 2: Restantes (premios e IDs)
-        const remainingPrizesRows = prizes.map((p, idx) => ({ '#': idx + 1, 'Premio restante': p }));
-        const remainingIdsRows = numbers.map((id, idx) => ({ '#': idx + 1, 'ID restante': id }));
-
-        const wsRestantes = XLSX.utils.aoa_to_sheet([
-          ['Resumen'],
-          ['Premios restantes', prizes.length],
-          ['IDs restantes', numbers.length],
-          [],
-          ['Premios restantes'],
-          ['#', 'Premio restante'],
-        ]);
-
-        if (remainingPrizesRows.length) {
-          XLSX.utils.sheet_add_json(wsRestantes, remainingPrizesRows, { origin: 'A6', skipHeader: true });
-        } else {
-          XLSX.utils.sheet_add_aoa(wsRestantes, [['(Sin premios restantes)']], { origin: 'B6' });
+      const correct = zone.dataset.correct;
+      if(word === correct){
+        zone.textContent = word;
+        zone.classList.add("filled");
+        reward(true);
+        correctCount += 1;
+        if(correctCount === zones.length){
+          toast("✅ ¡Frases completas!");
+          $("btnNext").disabled = false;
         }
+      }else{
+        reward(false);
+        toast(`Pista: mira el verbo y prueba otra palabra 🙂`);
+      }
+    });
+  });
 
-        const startRowIds = 6 + Math.max(remainingPrizesRows.length, 1) + 2; // +2 espacio
-        XLSX.utils.sheet_add_aoa(wsRestantes, [
-          [],
-          ['IDs restantes'],
-          ['#', 'ID restante']
-        ], { origin: `A${startRowIds}` });
-
-        if (remainingIdsRows.length) {
-          XLSX.utils.sheet_add_json(wsRestantes, remainingIdsRows, { origin: `A${startRowIds+2}`, skipHeader: true });
-        } else {
-          XLSX.utils.sheet_add_aoa(wsRestantes, [['(Sin IDs restantes)']], { origin: `B${startRowIds+2}` });
+  // Fallback para tablet: tap-to-place (si el drag no va fino)
+  // (Muy útil en algunos móviles)
+  let selectedWord = null;
+  area.querySelectorAll(".drag").forEach(d=>{
+    d.addEventListener("click", ()=>{
+      selectedWord = d.textContent;
+      toast(`Seleccionada: ${selectedWord} (toca un hueco para colocarla)`);
+    });
+  });
+  area.querySelectorAll(".dropzone").forEach(zone=>{
+    zone.addEventListener("click", ()=>{
+      if(!selectedWord || zone.classList.contains("filled")) return;
+      const correct = zone.dataset.correct;
+      if(selectedWord === correct){
+        zone.textContent = selectedWord;
+        zone.classList.add("filled");
+        reward(true);
+        correctCount += 1;
+        if(correctCount === zones.length){
+          toast("✅ ¡Frases completas!");
+          $("btnNext").disabled = false;
         }
+      }else{
+        reward(false);
+      }
+    });
+  });
+}
 
-        XLSX.utils.book_append_sheet(wb, wsRestantes, 'Restantes');
+// ====== RETO 3: Memory (parejas inf -> past) ======
+function renderMemoryChallenge(area){
+  const verbs = worldVerbs();
+  const chosen = pickRandom(verbs, 6); // 6 parejas
 
-        // ---- Hoja 3: Listado completo (todos los IDs + estado)
-        const winnersMap = new Map(winners.map(w => [w.numero, w])); // numero = ID
-        const allIds = Array.from(new Set(NON_CORRELATIVE_IDS));
+  const cards = [];
+  chosen.forEach(v=>{
+    const [inf,past,pp,es,emoji] = v;
+    cards.push({key:inf, label:`${emoji}\n${inf}`, pair:inf, type:"inf"});
+    cards.push({key:inf, label:`🕰️\n${past}`, pair:inf, type:"past"});
+  });
 
-        const fullRows = allIds.map((id, idx) => {
-          const w = winnersMap.get(id);
-          return {
-            '#': idx + 1,
-            'ID': id,
-            'Estado': w ? 'GANADO' : 'PENDIENTE',
-            'Premio (si aplica)': w ? w.premio : '',
-            'Fecha (si aplica)': w ? w.timestamp.toLocaleDateString() : '',
-            'Hora (si aplica)': w ? w.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
-          };
-        });
+  // shuffle
+  cards.sort(()=>Math.random()-0.5);
 
-        const wsFull = XLSX.utils.json_to_sheet(fullRows);
-        XLSX.utils.book_append_sheet(wb, wsFull, 'Listado completo');
+  area.innerHTML = `
+    <h3 class="bigTitle">3️⃣ Memory de verbos</h3>
+    <p class="hint">Encuentra la pareja: <b>infinitivo</b> + <b>past simple</b>.</p>
+    <div class="panel">
+      <div class="memoryGrid" id="mem"></div>
+      <p class="hint" style="margin-top:12px;">Cuando completes todas, desbloqueas “Siguiente”.</p>
+    </div>
+  `;
 
-        XLSX.writeFile(wb, `tombola_2025_${stamp}.xlsx`);
-      }, [winners, prizes, numbers]);
+  const mem = $("mem");
+  cards.forEach((c, idx)=>{
+    const t = document.createElement("div");
+    t.className = "tile";
+    t.dataset.pair = c.pair;
+    t.dataset.type = c.type;
+    t.dataset.idx = idx;
+    t.textContent = "❓";
+    mem.appendChild(t);
+  });
 
-      const handleReset = () => {
-        if (confirm('¿Estás seguro de reiniciar la tómbola? Se perderán todos los ganadores y el historial.')) {
-          setPrizes(INITIAL_PRIZES);
-          setNumbers(UNIQUE_IDS);
-          setCurrentPrize(null);
-          setCurrentNumber(null);
-          setWinners([]);
-          setShowWinner(false);
-        }
-      };
+  let first = null;
+  let lock = false;
+  let matched = 0;
 
-      const isGameActive = isSpinningPrize || isSpinningNumber;
-      const isGameOver = prizes.length === 0;
+  mem.addEventListener("click", (e)=>{
+    const tile = e.target.closest(".tile");
+    if(!tile || lock) return;
+    if(tile.classList.contains("matched") || tile.classList.contains("revealed")) return;
 
-      return (
-        <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-500 to-red-500 p-4 md:p-8 font-sans selection:bg-yellow-300 selection:text-black">
-          <div className="max-w-7xl mx-auto relative">
-            <InfoModal
-              isOpen={showInfo}
-              onClose={() => setShowInfo(false)}
-              prizesRemaining={prizes.length}
-              idsRemaining={numbers.length}
-            />
+    const idx = Number(tile.dataset.idx);
+    const card = cards[idx];
+    tile.classList.add("revealed");
+    tile.textContent = card.label;
 
-            <header className="relative text-center mb-8 pt-4">
-              <div className="flex items-center justify-center gap-4 mb-2">
-                <TrophyIcon className="w-10 h-10 md:w-16 md:h-16 text-yellow-300 animate-bounce" />
-                <h1 className="text-4xl md:text-6xl font-black text-white drop-shadow-lg tracking-tight">TÓMBOLA 2025</h1>
-                <TrophyIcon className="w-10 h-10 md:w-16 md:h-16 text-yellow-300 animate-bounce" />
-              </div>
-              <p className="text-white text-lg md:text-xl font-medium opacity-90 tracking-wide uppercase">¡Sorteo de premios en vivo!</p>
-              <button onClick={() => setShowInfo(true)} className="absolute top-0 right-0 p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-white/50" title="Información">
-                <InfoIcon className="w-8 h-8" />
-              </button>
-            </header>
+    if(!first){
+      first = tile;
+      return;
+    }
 
-            {winners.length > 0 && <WinnerBanner visible={showWinner} winner={winners[0]} />}
+    // second pick
+    const samePair = first.dataset.pair === tile.dataset.pair;
+    const differentType = first.dataset.type !== tile.dataset.type;
 
-            <div className="grid md:grid-cols-2 gap-8 mb-10">
-              <RaffleCard
-                title="Premios"
-                icon={<GiftIcon className="w-6 h-6 text-pink-500" />}
-                remainingCount={prizes.length}
-                currentValue={currentPrize}
-                isSpinning={isSpinningPrize}
-                themeColor="pink"
-              />
-              <RaffleCard
-                title="Números/IDs"
-                icon={<UsersIcon className="w-6 h-6 text-blue-500" />}
-                remainingCount={numbers.length}
-                currentValue={currentNumber}
-                isSpinning={isSpinningNumber}
-                themeColor="blue"
-              />
-            </div>
+    if(samePair && differentType){
+      // match!
+      first.classList.add("matched");
+      tile.classList.add("matched");
+      first.classList.remove("revealed");
+      tile.classList.remove("revealed");
+      reward(true);
+      matched += 1;
 
-            <div className="flex flex-col items-center justify-center mb-12 gap-6">
-              <button
-                onClick={handleAutoSpin}
-                disabled={isGameActive || isGameOver}
-                className={`group relative overflow-hidden rounded-full py-6 px-20 bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-black text-3xl md:text-5xl shadow-[0_0_40px_rgba(251,191,36,0.6)] transform transition-all duration-300 border-4 border-yellow-200 ${
-                  isGameActive || isGameOver
-                    ? 'opacity-60 grayscale cursor-not-allowed scale-95'
-                    : 'hover:scale-105 hover:shadow-[0_0_60px_rgba(251,191,36,0.8)] hover:-translate-y-1 active:scale-95 active:translate-y-1'
-                }`}
-              >
-                <div className="absolute inset-0 bg-white/30 group-hover:translate-x-full transition-transform duration-700 ease-in-out skew-x-12 origin-left"></div>
-                <div className="flex items-center gap-4 relative z-10 uppercase tracking-widest drop-shadow-md">
-                  <RotateCwIcon className={`w-8 h-8 md:w-12 md:h-12 ${isGameActive ? 'animate-spin' : ''}`} />
-                  <span>
-                    {isGameActive
-                      ? 'Sorteando...'
-                      : isGameOver
-                      ? 'Fin del Sorteo'
-                      : showWinner
-                      ? 'Siguiente'
-                      : '¡SORTEAR!'}
-                  </span>
-                </div>
-              </button>
+      first = null;
 
-              <div className="flex flex-col md:flex-row gap-3">
-                <button
-                  onClick={handleDownloadExcel}
-                  className="text-white/90 hover:text-white bg-white/10 hover:bg-white/15 px-4 py-2 rounded-lg text-sm font-bold transition-all"
-                  title="Descargar registro en Excel"
-                >
-                  📊 Descargar Excel
-                </button>
+      if(matched === chosen.length){
+        toast("🏆 ¡Memory completado!");
+        $("btnNext").disabled = false;
+      }
+    }else{
+      reward(false);
+      lock = true;
+      setTimeout(()=>{
+        first.classList.remove("revealed");
+        tile.classList.remove("revealed");
+        first.textContent = "❓";
+        tile.textContent = "❓";
+        first = null;
+        lock = false;
+      }, 650);
+    }
+  });
+}
 
-                <button
-                  onClick={handleReset}
-                  className="text-white/60 hover:text-white hover:bg-white/10 px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 justify-center"
-                >
-                  <TrashIcon className="w-4 h-4" /> Reiniciar Tómbola
-                </button>
-              </div>
-            </div>
-
-            <HistoryList winners={winners} />
-
-            <footer className="text-center text-white/50 text-sm mt-12 pb-4">
-              <p>&copy; {new Date().getFullYear()} Evento Tómbola</p>
-            </footer>
-          </div>
-        </div>
-      );
-    };
-
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
-  </script>
-</body>
-</html>
+// INIT
+load();
+hud();
+renderWorlds();
+showScreen(true);
