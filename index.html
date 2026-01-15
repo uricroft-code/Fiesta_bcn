@@ -1,66 +1,755 @@
-<div class="app">
-  <header class="top">
-    <div class="brand">
-      <div class="logo">🗺️</div>
-      <div>
-        <h1>Verb Adventure Island</h1>
-        <p class="sub">Aprende verbos irregulares jugando (tablet friendly)</p>
-      </div>
-    </div>
+import React, { useState, useEffect } from 'react';
+import { Sparkles, Trophy, Zap } from 'lucide-react';
 
-    <div class="hud">
-      <div class="pill">⭐ <span id="stars">0</span></div>
-      <div class="pill">🪙 <span id="coins">0</span></div>
-      <div class="pill">🔥 Racha: <span id="streak">0</span></div>
-    </div>
-  </header>
+const VERBS = [
+  { infinitive: "BE", simple: "Was/Were", participle: "Been", translation: "Ser/estar" },
+  { infinitive: "BUILD", simple: "Built", participle: "Built", translation: "Construir" },
+  { infinitive: "BRING", simple: "Brought", participle: "Brought", translation: "Traer" },
+  { infinitive: "BUY", simple: "Bought", participle: "Bought", translation: "Comprar" },
+  { infinitive: "CUT", simple: "Cut", participle: "Cut", translation: "Cortar" },
+  { infinitive: "COST", simple: "Cost", participle: "Cost", translation: "Costar/valer" },
+  { infinitive: "CATCH", simple: "Caught", participle: "Caught", translation: "Coger/pillar/atrapar" },
+  { infinitive: "DO", simple: "Did", participle: "Done", translation: "Hacer" },
+  { infinitive: "DRINK", simple: "Drank", participle: "Drunk", translation: "Beber" },
+  { infinitive: "EAT", simple: "Ate", participle: "Eaten", translation: "Comer" },
+  { infinitive: "FALL", simple: "Fell", participle: "Fallen", translation: "Caer/caerse" },
+  { infinitive: "FIND", simple: "Found", participle: "Found", translation: "Encontrar" },
+  { infinitive: "FIGHT", simple: "Fought", participle: "Fought", translation: "Luchar/Pelear" },
+  { infinitive: "FLY", simple: "Flew", participle: "Flown", translation: "Volar" },
+  { infinitive: "GET", simple: "Got", participle: "Got/Gotten", translation: "Conseguir/Obtener" },
+  { infinitive: "GO", simple: "Went", participle: "Gone", translation: "Irse/partir" },
+  { infinitive: "HAVE", simple: "Had", participle: "Had", translation: "Tener" },
+  { infinitive: "KNOW", simple: "Knew", participle: "Known", translation: "Conocer/Saber" },
+  { infinitive: "LEARN", simple: "Learnt", participle: "Learnt", translation: "Aprender" },
+  { infinitive: "LOSE", simple: "Lost", participle: "Lost", translation: "Perder" },
+  { infinitive: "MAKE", simple: "Made", participle: "Made", translation: "Hacer/fabricar/Preparar" },
+  { infinitive: "MEET", simple: "Met", participle: "Met", translation: "Encontrarse/Reunirse" },
+  { infinitive: "PUT", simple: "Put", participle: "Put", translation: "Poner/colocar" },
+  { infinitive: "READ", simple: "Read", participle: "Read", translation: "Leer" },
+  { infinitive: "RUN", simple: "Ran", participle: "Run", translation: "Correr" },
+  { infinitive: "RIDE", simple: "Rode", participle: "Ridden", translation: "Montar a..." },
+  { infinitive: "SAY", simple: "Said", participle: "Said", translation: "Decir" },
+  { infinitive: "SEE", simple: "Saw", participle: "Seen", translation: "Ver" },
+  { infinitive: "SELL", simple: "Sold", participle: "Sold", translation: "Vender" },
+  { infinitive: "SEND", simple: "Sent", participle: "Sent", translation: "Enviar" },
+  { infinitive: "SING", simple: "Sang", participle: "Sung", translation: "Cantar" },
+  { infinitive: "SMELL", simple: "Smelt", participle: "Smelt", translation: "Oler" },
+  { infinitive: "SLEEP", simple: "Slept", participle: "Slept", translation: "Dormir" },
+  { infinitive: "SPEAK", simple: "Spoke", participle: "Spoken", translation: "Hablar" },
+  { infinitive: "SPELL", simple: "Spelt", participle: "Spelt", translation: "Deletrear" },
+  { infinitive: "SWIM", simple: "Swam", participle: "Swum", translation: "Nadar" },
+  { infinitive: "TAKE", simple: "Took", participle: "Taken", translation: "Apartar/Coger" },
+  { infinitive: "TELL", simple: "Told", participle: "Told", translation: "Decir a.../decir algo" },
+  { infinitive: "THINK", simple: "Thought", participle: "Thought", translation: "Pensar" },
+  { infinitive: "WEAR", simple: "Wore", participle: "Worn", translation: "Usar/Llevar puesto/Vestir" },
+  { infinitive: "WIN", simple: "Won", participle: "Won", translation: "Ganar" },
+  { infinitive: "WRITE", simple: "Wrote", participle: "Written", translation: "Escribir" }
+];
 
-  <main class="main">
-    <section id="screenMenu" class="screen active">
-      <div class="card">
-        <h2>Elige un mundo</h2>
-        <p>En cada mundo arreglas verbos para avanzar. Toca un mundo para empezar.</p>
-        <div id="worldGrid" class="grid"></div>
-        <div class="row">
-          <button class="btn ghost" id="btnReset">🔄 Reiniciar progreso</button>
-          <button class="btn" id="btnHow">❓ Cómo se juega</button>
-        </div>
-      </div>
+const WORLDS = [
+  { id: 1, name: "Beginner Valley", icon: "🌱", desc: "Learn basic irregular verbs", verbs: 10 },
+  { id: 2, name: "Practice Plains", icon: "⚡", desc: "Test your knowledge", verbs: 15 },
+  { id: 3, name: "Master Mountain", icon: "🏆", desc: "Complete mastery challenge", verbs: 20 }
+];
 
-      <div class="card small" id="howBox" style="display:none;">
-        <h3>Cómo se juega</h3>
-        <ul>
-          <li>✅ Acertar = ganas ⭐ y 🪙</li>
-          <li>🎯 En cada nivel hay 3 retos: tocar, arrastrar, memory</li>
-          <li>❌ Si fallas, no pasa nada: te doy pista y lo intentas otra vez</li>
-        </ul>
-      </div>
-    </section>
+const GAME_TYPES = [
+  { id: 'quiz', name: 'Multiple Choice', icon: '✓', desc: 'Select the correct answer' },
+  { id: 'write', name: 'Write Answer', icon: '✍️', desc: 'Type the correct form' },
+  { id: 'complete', name: 'Complete Forms', icon: '📝', desc: 'Fill in missing forms' }
+];
 
-    <section id="screenPlay" class="screen">
-      <div class="card">
-        <div class="levelTop">
-          <button class="btn ghost" id="btnBack">⬅️ Menú</button>
-          <div class="levelInfo">
-            <h2 id="levelTitle">Mundo</h2>
-            <p id="levelDesc">Nivel</p>
+export default function IrregularVerbsGame() {
+  const [screen, setScreen] = useState('menu');
+  const [currentWorld, setCurrentWorld] = useState(null);
+  const [progress, setProgress] = useState({ 1: 0, 2: 0, 3: 0 });
+  const [score, setScore] = useState(0);
+  const [gameType, setGameType] = useState(null);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [questions, setQuestions] = useState([]);
+  const [feedback, setFeedback] = useState(null);
+  const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const [userInput, setUserInput] = useState('');
+  const [userInputs, setUserInputs] = useState({ field1: '', field2: '' });
+
+  const showToast = (msg) => {
+    setFeedback(msg);
+    setTimeout(() => setFeedback(null), 2000);
+  };
+
+  const shuffleArray = (arr) => {
+    const newArr = [...arr];
+    for (let i = newArr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+    }
+    return newArr;
+  };
+
+  const generateQuestions = (world, type) => {
+    const count = world.verbs;
+    const selectedVerbs = shuffleArray(VERBS).slice(0, count);
+    
+    if (type === 'complete') {
+      return selectedVerbs.map(verb => {
+        const givenOptions = ['infinitive', 'simple', 'participle', 'translation'];
+        const givenField = givenOptions[Math.floor(Math.random() * givenOptions.length)];
+        
+        const fieldsToFill = givenOptions.filter(f => f !== givenField);
+        const selectedFields = shuffleArray(fieldsToFill).slice(0, 2);
+        
+        return {
+          verb: verb.infinitive,
+          questionType: 'complete',
+          givenField,
+          givenValue: verb[givenField],
+          fieldsToFill: selectedFields,
+          correctAnswers: {
+            [selectedFields[0]]: verb[selectedFields[0]],
+            [selectedFields[1]]: verb[selectedFields[1]]
+          }
+        };
+      });
+    }
+    
+    return selectedVerbs.map(verb => {
+      const rand = Math.random();
+      let questionType, correctAnswer, fieldName;
+      
+      if (rand < 0.33) {
+        questionType = 'simple';
+        correctAnswer = verb.simple;
+        fieldName = 'Past Simple';
+      } else if (rand < 0.66) {
+        questionType = 'participle';
+        correctAnswer = verb.participle;
+        fieldName = 'Past Participle';
+      } else {
+        questionType = 'translation';
+        correctAnswer = verb.translation;
+        fieldName = 'Translation';
+      }
+      
+      if (type === 'write') {
+        return {
+          verb: verb.infinitive,
+          questionType,
+          fieldName,
+          correctAnswer
+        };
+      }
+      
+      const wrongAnswers = shuffleArray(
+        VERBS.filter(v => v.infinitive !== verb.infinitive)
+          .map(v => v[questionType])
+      ).slice(0, 3);
+      
+      const allAnswers = shuffleArray([correctAnswer, ...wrongAnswers]);
+      
+      return {
+        verb: verb.infinitive,
+        questionType,
+        fieldName,
+        correctAnswer,
+        answers: allAnswers
+      };
+    });
+  };
+
+  const startGame = (world, type) => {
+    setCurrentWorld(world);
+    setGameType(type);
+    setCurrentQuestion(0);
+    setScore(0);
+    const qs = generateQuestions(world, type);
+    setQuestions(qs);
+    setScreen('game');
+    setSelectedAnswer(null);
+    setUserInput('');
+    setUserInputs({ field1: '', field2: '' });
+  };
+
+  const handleAnswer = (answer) => {
+    if (selectedAnswer !== null) return;
+    
+    setSelectedAnswer(answer);
+    const isCorrect = answer === questions[currentQuestion].correctAnswer;
+    
+    if (isCorrect) {
+      setScore(score + 1);
+      showToast('¡Correcto! 🎉');
+    } else {
+      showToast('Incorrecto. La respuesta era: ' + questions[currentQuestion].correctAnswer);
+    }
+
+    setTimeout(() => {
+      if (currentQuestion < questions.length - 1) {
+        setCurrentQuestion(currentQuestion + 1);
+        setSelectedAnswer(null);
+      } else {
+        finishGame();
+      }
+    }, 1500);
+  };
+
+  const handleWriteSubmit = () => {
+    const currentQ = questions[currentQuestion];
+    const normalizedInput = userInput.trim().toLowerCase();
+    const normalizedCorrect = currentQ.correctAnswer.toLowerCase();
+    
+    const isCorrect = normalizedInput === normalizedCorrect;
+    
+    if (isCorrect) {
+      setScore(score + 1);
+      showToast('¡Correcto! 🎉');
+    } else {
+      showToast('Incorrecto. La respuesta era: ' + currentQ.correctAnswer);
+    }
+
+    setTimeout(() => {
+      if (currentQuestion < questions.length - 1) {
+        setCurrentQuestion(currentQuestion + 1);
+        setUserInput('');
+      } else {
+        finishGame();
+      }
+    }, 1500);
+  };
+
+  const handleCompleteSubmit = () => {
+    const currentQ = questions[currentQuestion];
+    const field1 = currentQ.fieldsToFill[0];
+    const field2 = currentQ.fieldsToFill[1];
+    
+    const answer1Correct = userInputs.field1.trim().toLowerCase() === currentQ.correctAnswers[field1].toLowerCase();
+    const answer2Correct = userInputs.field2.trim().toLowerCase() === currentQ.correctAnswers[field2].toLowerCase();
+    
+    const isCorrect = answer1Correct && answer2Correct;
+    
+    if (isCorrect) {
+      setScore(score + 1);
+      showToast('¡Correcto! 🎉');
+    } else {
+      const correctTexts = [];
+      if (!answer1Correct) correctTexts.push(getFieldLabel(field1) + ': ' + currentQ.correctAnswers[field1]);
+      if (!answer2Correct) correctTexts.push(getFieldLabel(field2) + ': ' + currentQ.correctAnswers[field2]);
+      showToast('Incorrecto. ' + correctTexts.join(', '));
+    }
+
+    setTimeout(() => {
+      if (currentQuestion < questions.length - 1) {
+        setCurrentQuestion(currentQuestion + 1);
+        setUserInputs({ field1: '', field2: '' });
+      } else {
+        finishGame();
+      }
+    }, 2000);
+  };
+
+  const getFieldLabel = (field) => {
+    const labels = {
+      infinitive: 'Infinitive',
+      simple: 'Past Simple',
+      participle: 'Past Participle',
+      translation: 'Traducción'
+    };
+    return labels[field] || field;
+  };
+
+  const finishGame = () => {
+    const worldProgress = Math.round((score / questions.length) * 100);
+    setProgress(prev => ({
+      ...prev,
+      [currentWorld.id]: Math.max(prev[currentWorld.id], worldProgress)
+    }));
+    setScreen('results');
+  };
+
+  const currentQ = questions[currentQuestion];
+  const progressPercent = questions.length > 0 ? ((currentQuestion + 1) / questions.length) * 100 : 0;
+
+  return (
+    <div style={{ 
+      minHeight: '100vh',
+      background: 'radial-gradient(1200px 700px at 20% 10%, rgba(122,167,255,.25), transparent 60%), radial-gradient(900px 700px at 90% 30%, rgba(124,255,194,.18), transparent 55%), #0b1220',
+      color: '#eaf0ff',
+      fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Arial'
+    }}>
+      <div style={{ maxWidth: '1050px', margin: '0 auto', padding: '14px' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', justifyContent: 'space-between', padding: '10px 6px' }}>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <div style={{
+              width: '48px', height: '48px', borderRadius: '16px',
+              display: 'grid', placeItems: 'center',
+              background: 'linear-gradient(135deg, rgba(124,255,194,.25), rgba(122,167,255,.25))',
+              boxShadow: '0 10px 30px rgba(0,0,0,.35)',
+              fontSize: '22px'
+            }}>
+              <Sparkles size={28} />
+            </div>
+            <div>
+              <h1 style={{ margin: 0, fontSize: '20px' }}>Irregular Verbs Master</h1>
+              <div style={{ margin: '2px 0 0', color: '#b7c4ff', fontSize: '13px' }}>
+                Learn English irregular verbs
+              </div>
+            </div>
           </div>
-          <button class="btn" id="btnNext" disabled>Siguiente ➜</button>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            <div style={{
+              background: 'rgba(255,255,255,.06)',
+              border: '1px solid rgba(255,255,255,.09)',
+              padding: '8px 10px', borderRadius: '999px',
+              boxShadow: '0 10px 30px rgba(0,0,0,.35)',
+              fontWeight: 600
+            }}>
+              <Trophy size={16} style={{ verticalAlign: 'middle', marginRight: '6px' }} />
+              {Object.values(progress).reduce((a, b) => a + b, 0) / 3}%
+            </div>
+          </div>
         </div>
 
-        <div class="progress">
-          <div class="bar"><div class="fill" id="fill"></div></div>
-          <div class="ptext"><span id="stepNow">1</span>/3</div>
-        </div>
+        {/* Menu Screen */}
+        {screen === 'menu' && (
+          <div style={{ padding: '8px 0 0' }}>
+            <div style={{
+              background: 'linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03))',
+              border: '1px solid rgba(255,255,255,.10)',
+              borderRadius: '22px',
+              padding: '16px',
+              boxShadow: '0 10px 30px rgba(0,0,0,.35)'
+            }}>
+              <h2 style={{ margin: '0 0 6px' }}>Choose Your World</h2>
+              <p style={{ margin: '0 0 12px', color: '#b7c4ff' }}>
+                Select a difficulty level to start learning
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
+                {WORLDS.map(world => (
+                  <div
+                    key={world.id}
+                    onClick={() => {
+                      setCurrentWorld(world);
+                      setScreen('gameType');
+                    }}
+                    style={{
+                      background: 'rgba(255,255,255,.05)',
+                      border: progress[world.id] === 100 ? '1px solid rgba(124,255,194,.5)' : '1px solid rgba(255,255,255,.10)',
+                      borderRadius: '18px',
+                      padding: '14px',
+                      display: 'flex', gap: '10px', alignItems: 'flex-start',
+                      cursor: 'pointer',
+                      userSelect: 'none',
+                      transition: 'transform .08s ease'
+                    }}
+                    onMouseDown={(e) => e.currentTarget.style.transform = 'scale(.99)'}
+                    onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                  >
+                    <div style={{ fontSize: '26px' }}>{world.icon}</div>
+                    <div style={{ flex: 1 }}>
+                      <h3 style={{ fontWeight: 800, margin: 0 }}>{world.name}</h3>
+                      <div style={{ margin: '4px 0 0', color: '#b7c4ff', fontSize: '13px' }}>
+                        {world.desc} • {world.verbs} verbs
+                      </div>
+                      {progress[world.id] > 0 && (
+                        <div style={{ marginTop: '8px', fontSize: '12px', color: '#7cffc2', fontWeight: 600 }}>
+                          Progress: {progress[world.id]}%
+                        </div>
+                      )}
+                    </div>
+                    {progress[world.id] === 100 && <div style={{ fontSize: '18px' }}>✓</div>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
-        <div id="gameArea" class="gameArea"></div>
+        {/* Game Type Selection */}
+        {screen === 'gameType' && currentWorld && (
+          <div style={{ padding: '8px 0 0' }}>
+            <div style={{
+              background: 'linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03))',
+              border: '1px solid rgba(255,255,255,.10)',
+              borderRadius: '22px',
+              padding: '16px',
+              boxShadow: '0 10px 30px rgba(0,0,0,.35)'
+            }}>
+              <h2 style={{ margin: '0 0 6px' }}>{currentWorld.name}</h2>
+              <p style={{ margin: '0 0 16px', color: '#b7c4ff' }}>
+                Choose your game mode
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
+                {GAME_TYPES.map(type => (
+                  <div
+                    key={type.id}
+                    onClick={() => startGame(currentWorld, type.id)}
+                    style={{
+                      background: 'rgba(255,255,255,.05)',
+                      border: '1px solid rgba(255,255,255,.10)',
+                      borderRadius: '18px',
+                      padding: '16px',
+                      cursor: 'pointer',
+                      userSelect: 'none',
+                      textAlign: 'center',
+                      transition: 'transform .08s ease'
+                    }}
+                    onMouseDown={(e) => e.currentTarget.style.transform = 'scale(.99)'}
+                    onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                  >
+                    <div style={{ fontSize: '32px', marginBottom: '8px' }}>{type.icon}</div>
+                    <h3 style={{ fontWeight: 800, margin: '0 0 6px' }}>{type.name}</h3>
+                    <div style={{ color: '#b7c4ff', fontSize: '13px' }}>{type.desc}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginTop: '16px' }}>
+                <button
+                  onClick={() => setScreen('menu')}
+                  style={{
+                    border: '1px solid rgba(255,255,255,.14)',
+                    borderRadius: '16px',
+                    padding: '10px 16px',
+                    fontWeight: 900,
+                    cursor: 'pointer',
+                    background: 'rgba(255,255,255,.06)',
+                    color: '#eaf0ff',
+                    fontSize: '14px'
+                  }}
+                >
+                  ← Back
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Game Screen */}
+        {screen === 'game' && currentQ && (
+          <div style={{ padding: '8px 0 0' }}>
+            <div style={{
+              background: 'linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03))',
+              border: '1px solid rgba(255,255,255,.10)',
+              borderRadius: '22px',
+              padding: '16px',
+              boxShadow: '0 10px 30px rgba(0,0,0,.35)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '10px' }}>
+                <div>
+                  <h2 style={{ margin: 0 }}>{currentWorld.name}</h2>
+                  <p style={{ margin: '2px 0 0', color: '#b7c4ff', fontSize: '13px' }}>
+                    Question {currentQuestion + 1} of {questions.length}
+                  </p>
+                </div>
+                <div style={{ fontSize: '24px', fontWeight: 800 }}>
+                  {score}/{questions.length}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', margin: '10px 0 14px' }}>
+                <div style={{
+                  flex: 1, height: '14px', borderRadius: '999px',
+                  background: 'rgba(255,255,255,.08)',
+                  border: '1px solid rgba(255,255,255,.10)',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{
+                    height: '100%',
+                    width: `${progressPercent}%`,
+                    background: 'linear-gradient(90deg, rgba(124,255,194,.9), rgba(122,167,255,.9))',
+                    transition: 'width .25s ease'
+                  }} />
+                </div>
+                <div style={{ fontWeight: 800, color: '#b7c4ff' }}>{Math.round(progressPercent)}%</div>
+              </div>
+
+              <div style={{ paddingTop: '6px' }}>
+                {/* Multiple Choice Game */}
+                {gameType === 'quiz' && (
+                  <>
+                    <h3 style={{ fontSize: '18px', margin: '0 0 8px' }}>
+                      What is the {currentQ.fieldName} of:
+                    </h3>
+                    <div style={{
+                      background: 'rgba(0,0,0,.18)',
+                      border: '1px solid rgba(255,255,255,.10)',
+                      borderRadius: '18px',
+                      padding: '24px 14px',
+                      textAlign: 'center',
+                      marginBottom: '14px'
+                    }}>
+                      <div style={{ fontSize: '32px', fontWeight: 900 }}>
+                        {currentQ.verb}
+                      </div>
+                    </div>
+
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(2, minmax(0,1fr))',
+                      gap: '10px'
+                    }}>
+                      {currentQ.answers.map((answer, idx) => {
+                        const isSelected = selectedAnswer === answer;
+                        const isCorrect = answer === currentQ.correctAnswer;
+                        const showResult = selectedAnswer !== null;
+                        
+                        let className = '';
+                        if (showResult && isSelected && isCorrect) className = 'good';
+                        else if (showResult && isSelected && !isCorrect) className = 'bad';
+                        else if (showResult && isCorrect) className = 'good';
+
+                        return (
+                          <div
+                            key={idx}
+                            onClick={() => handleAnswer(answer)}
+                            style={{
+                              border: className === 'good' ? '1px solid rgba(124,255,194,.7)' : 
+                                      className === 'bad' ? '1px solid rgba(255,122,122,.7)' : 
+                                      '1px solid rgba(255,255,255,.12)',
+                              background: className === 'good' ? 'rgba(124,255,194,.12)' : 
+                                         className === 'bad' ? 'rgba(255,122,122,.10)' : 
+                                         'rgba(255,255,255,.06)',
+                              borderRadius: '18px',
+                              padding: '16px 12px',
+                              fontWeight: 900,
+                              fontSize: '18px',
+                              textAlign: 'center',
+                              cursor: selectedAnswer ? 'default' : 'pointer',
+                              userSelect: 'none',
+                              transition: 'all .15s ease'
+                            }}
+                          >
+                            {answer}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+
+                {/* Write Answer Game */}
+                {gameType === 'write' && (
+                  <>
+                    <h3 style={{ fontSize: '18px', margin: '0 0 8px' }}>
+                      Write the {currentQ.fieldName} of:
+                    </h3>
+                    <div style={{
+                      background: 'rgba(0,0,0,.18)',
+                      border: '1px solid rgba(255,255,255,.10)',
+                      borderRadius: '18px',
+                      padding: '24px 14px',
+                      textAlign: 'center',
+                      marginBottom: '14px'
+                    }}>
+                      <div style={{ fontSize: '32px', fontWeight: 900 }}>
+                        {currentQ.verb}
+                      </div>
+                    </div>
+
+                    <input
+                      type="text"
+                      value={userInput}
+                      onChange={(e) => setUserInput(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && userInput.trim() && handleWriteSubmit()}
+                      placeholder="Type your answer..."
+                      autoFocus
+                      style={{
+                        width: '100%',
+                        padding: '16px',
+                        fontSize: '18px',
+                        fontWeight: 700,
+                        borderRadius: '18px',
+                        border: '1px solid rgba(255,255,255,.12)',
+                        background: 'rgba(255,255,255,.06)',
+                        color: '#eaf0ff',
+                        outline: 'none',
+                        marginBottom: '12px'
+                      }}
+                    />
+                    
+                    <button
+                      onClick={handleWriteSubmit}
+                      disabled={!userInput.trim()}
+                      style={{
+                        border: 0,
+                        borderRadius: '16px',
+                        padding: '12px 20px',
+                        fontWeight: 900,
+                        cursor: userInput.trim() ? 'pointer' : 'not-allowed',
+                        background: 'linear-gradient(135deg, rgba(124,255,194,.9), rgba(122,167,255,.9))',
+                        color: '#051022',
+                        boxShadow: '0 10px 30px rgba(0,0,0,.35)',
+                        fontSize: '16px',
+                        width: '100%',
+                        opacity: userInput.trim() ? 1 : 0.45
+                      }}
+                    >
+                      Submit Answer
+                    </button>
+                  </>
+                )}
+
+                {/* Complete Forms Game */}
+                {gameType === 'complete' && (
+                  <>
+                    <h3 style={{ fontSize: '18px', margin: '0 0 8px' }}>
+                      Complete the verb forms
+                    </h3>
+                    <div style={{
+                      background: 'rgba(0,0,0,.18)',
+                      border: '1px solid rgba(255,255,255,.10)',
+                      borderRadius: '18px',
+                      padding: '20px 14px',
+                      marginBottom: '14px'
+                    }}>
+                      <div style={{ marginBottom: '16px', textAlign: 'center' }}>
+                        <div style={{ color: '#b7c4ff', fontSize: '13px', marginBottom: '6px' }}>
+                          {getFieldLabel(currentQ.givenField)}
+                        </div>
+                        <div style={{ fontSize: '28px', fontWeight: 900, color: '#7cffc2' }}>
+                          {currentQ.givenValue}
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'grid', gap: '12px' }}>
+                        {currentQ.fieldsToFill.map((field, idx) => (
+                          <div key={field}>
+                            <label style={{ display: 'block', color: '#b7c4ff', fontSize: '13px', marginBottom: '6px', fontWeight: 600 }}>
+                              {getFieldLabel(field)}
+                            </label>
+                            <input
+                              type="text"
+                              value={idx === 0 ? userInputs.field1 : userInputs.field2}
+                              onChange={(e) => setUserInputs(prev => ({
+                                ...prev,
+                                [idx === 0 ? 'field1' : 'field2']: e.target.value
+                              }))}
+                              placeholder={`Enter ${getFieldLabel(field).toLowerCase()}...`}
+                              autoFocus={idx === 0}
+                              style={{
+                                width: '100%',
+                                padding: '14px',
+                                fontSize: '16px',
+                                fontWeight: 700,
+                                borderRadius: '16px',
+                                border: '1px solid rgba(255,255,255,.12)',
+                                background: 'rgba(255,255,255,.06)',
+                                color: '#eaf0ff',
+                                outline: 'none'
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <button
+                      onClick={handleCompleteSubmit}
+                      disabled={!userInputs.field1.trim() || !userInputs.field2.trim()}
+                      style={{
+                        border: 0,
+                        borderRadius: '16px',
+                        padding: '12px 20px',
+                        fontWeight: 900,
+                        cursor: (userInputs.field1.trim() && userInputs.field2.trim()) ? 'pointer' : 'not-allowed',
+                        background: 'linear-gradient(135deg, rgba(124,255,194,.9), rgba(122,167,255,.9))',
+                        color: '#051022',
+                        boxShadow: '0 10px 30px rgba(0,0,0,.35)',
+                        fontSize: '16px',
+                        width: '100%',
+                        opacity: (userInputs.field1.trim() && userInputs.field2.trim()) ? 1 : 0.45
+                      }}
+                    >
+                      Check Answers
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Results Screen */}
+        {screen === 'results' && (
+          <div style={{ padding: '8px 0 0' }}>
+            <div style={{
+              background: 'linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03))',
+              border: '1px solid rgba(255,255,255,.10)',
+              borderRadius: '22px',
+              padding: '24px 16px',
+              boxShadow: '0 10px 30px rgba(0,0,0,.35)',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '64px', marginBottom: '16px' }}>
+                {score / questions.length >= 0.8 ? '🏆' : score / questions.length >= 0.5 ? '👍' : '📚'}
+              </div>
+              <h2 style={{ margin: '0 0 8px', fontSize: '28px' }}>
+                {score / questions.length >= 0.8 ? '¡Excelente!' : score / questions.length >= 0.5 ? '¡Bien hecho!' : '¡Sigue practicando!'}
+              </h2>
+              <p style={{ margin: '0 0 24px', color: '#b7c4ff', fontSize: '18px' }}>
+                Score: {score} / {questions.length} ({Math.round((score / questions.length) * 100)}%)
+              </p>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                <button
+                  onClick={() => startGame(currentWorld, gameType)}
+                  style={{
+                    border: 0,
+                    borderRadius: '16px',
+                    padding: '12px 20px',
+                    fontWeight: 900,
+                    cursor: 'pointer',
+                    background: 'linear-gradient(135deg, rgba(124,255,194,.9), rgba(122,167,255,.9))',
+                    color: '#051022',
+                    boxShadow: '0 10px 30px rgba(0,0,0,.35)',
+                    fontSize: '16px'
+                  }}
+                >
+                  <Zap size={18} style={{ verticalAlign: 'middle', marginRight: '6px' }} />
+                  Play Again
+                </button>
+                <button
+                  onClick={() => setScreen('menu')}
+                  style={{
+                    border: '1px solid rgba(255,255,255,.14)',
+                    borderRadius: '16px',
+                    padding: '12px 20px',
+                    fontWeight: 900,
+                    cursor: 'pointer',
+                    background: 'rgba(255,255,255,.06)',
+                    color: '#eaf0ff',
+                    boxShadow: '0 10px 30px rgba(0,0,0,.35)',
+                    fontSize: '16px'
+                  }}
+                >
+                  Back to Menu
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Toast */}
+        <div style={{
+          position: 'fixed',
+          left: '50%',
+          bottom: '18px',
+          transform: 'translateX(-50%)',
+          background: 'rgba(0,0,0,.75)',
+          border: '1px solid rgba(255,255,255,.14)',
+          color: '#eaf0ff',
+          padding: '10px 14px',
+          borderRadius: '999px',
+          boxShadow: '0 10px 30px rgba(0,0,0,.35)',
+          opacity: feedback ? 1 : 0,
+          pointerEvents: 'none',
+          transition: 'opacity .2s ease',
+          maxWidth: '92vw',
+          textAlign: 'center',
+          fontWeight: 800
+        }}>
+          {feedback}
+        </div>
       </div>
-    </section>
-
-    <section id="toast" class="toast"></section>
-  </main>
-
-  <footer class="foot">
-    <span>💡 Tip: en iPad/Android puedes “Añadir a pantalla de inicio” para usarlo como app.</span>
-  </footer>
-</div>
+    </div>
+  );
+}
